@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Logo } from "@/components/brand/Logo";
 import { AccountMenu } from "@/components/AccountMenu";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import {
   createCourse,
   deleteCourse,
@@ -44,6 +45,7 @@ export default function AuthorDashboard() {
             >
               + New course
             </button>
+            <ThemeToggle />
             <AccountMenu />
           </div>
         </div>

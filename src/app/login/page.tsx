@@ -10,6 +10,7 @@ import {
 } from "@/components/auth/ProviderIcons";
 import { createClient } from "@/lib/supabase/client";
 import { signInWithTelegram, telegramConfigured } from "@/lib/telegram";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 function LoginInner() {
   const router = useRouter();
@@ -127,7 +128,10 @@ function LoginInner() {
   };
 
   return (
-    <div className="grid min-h-dvh lg:grid-cols-2">
+    <div className="relative grid min-h-dvh lg:grid-cols-2">
+      <div className="absolute right-4 top-4 z-10">
+        <ThemeToggle />
+      </div>
       {/* Brand panel */}
       <aside className="relative hidden min-h-dvh flex-col justify-between overflow-hidden bg-gradient-to-br from-brand to-brand-700 p-10 text-white lg:flex">
         <div

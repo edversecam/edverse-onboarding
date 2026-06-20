@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Course, flattenLessons } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { BlockRenderer } from "@/components/blocks/BlockRenderer";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { useProgress } from "@/lib/progress";
 import { Sidebar } from "./Sidebar";
 
@@ -82,6 +83,7 @@ export function CoursePlayer({ course }: { course: Course }) {
           <span className="ml-auto rounded-full bg-surface-2 px-3 py-1 text-xs font-semibold text-muted">
             {index + 1} / {flat.length}
           </span>
+          <ThemeToggle />
         </header>
 
         {/* Content */}

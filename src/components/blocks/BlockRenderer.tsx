@@ -47,7 +47,7 @@ export function BlockRenderer({ block }: { block: Block }) {
       const tone = {
         info: "border-brand/30 bg-brand-tint",
         success: "border-success/30 bg-success-tint",
-        warning: "border-warning/30 bg-[#fdf6e7]",
+        warning: "border-warning/30 bg-[var(--warning-tint)]",
       }[block.tone];
       return (
         <aside className={cn("rounded-xl border p-4", tone)}>

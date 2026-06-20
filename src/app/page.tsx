@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Logo } from "@/components/brand/Logo";
 import { AccountMenu } from "@/components/AccountMenu";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { useCourses, useCoursesLoaded } from "@/lib/store";
 import { useUser } from "@/lib/auth";
 import { flattenLessons } from "@/lib/types";
@@ -26,6 +27,7 @@ export default function Home() {
                 Author courses
               </Link>
             )}
+            <ThemeToggle />
             <AccountMenu />
           </div>
         </div>

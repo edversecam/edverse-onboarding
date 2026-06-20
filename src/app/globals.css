@@ -21,9 +21,37 @@
   --danger: #d92d4b;
   --danger-tint: #fce8ec;
   --warning: #c98a00;
+  --warning-tint: #fdf6e7;
 
   --radius: 0.875rem;
   --shadow-card: 0 1px 2px rgba(20, 23, 43, 0.04), 0 8px 24px rgba(20, 23, 43, 0.06);
+}
+
+/* Dark theme — toggled by adding `.dark` to <html>. Every token below is
+   referenced through @theme inline, so overriding them recolours the app. */
+.dark {
+  --brand: #5a6dff;
+  --brand-600: #7184ff;
+  --brand-700: #a6b4ff;
+  --brand-tint: #1a2150;
+  --brand-tint-2: #232c64;
+
+  --background: #0b0e18;
+  --surface: #141828;
+  --surface-2: #1d2336;
+  --foreground: #e9ebf5;
+  --muted: #98a1be;
+  --border: #2a3147;
+
+  --success: #34d399;
+  --success-tint: #10261e;
+  --danger: #fb7185;
+  --danger-tint: #2d1622;
+  --warning: #e0a83a;
+  --warning-tint: #2a2310;
+
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 26px rgba(0, 0, 0, 0.5);
+  color-scheme: dark;
 }
 
 @theme inline {
