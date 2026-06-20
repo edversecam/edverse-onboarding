@@ -6,6 +6,14 @@ and enforces **two-factor authentication (TOTP)** for every account.
 Email/password + 2FA work out of the box. The social providers need credentials
 from each platform (only you can create these) enabled in Supabase.
 
+## Showing the social buttons
+The Google / Facebook / Telegram buttons are **hidden until configured**. After
+enabling a provider below, reveal its button with an env var (in Vercel +
+`.env.local`), then redeploy:
+- Google:   `NEXT_PUBLIC_AUTH_GOOGLE=true`
+- Facebook: `NEXT_PUBLIC_AUTH_FACEBOOK=true`
+- Telegram: `NEXT_PUBLIC_TELEGRAM_BOT_ID=<bot id>` (the button shows automatically)
+
 Supabase project: **edverse** (`ugrbjajtazdgjfhdcbtx`) ·
 Dashboard → Authentication → Providers.
 

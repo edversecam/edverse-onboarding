@@ -28,6 +28,12 @@ function LoginInner() {
   const callbackUrl = (n: string) =>
     `${window.location.origin}/auth/callback?next=${encodeURIComponent(n)}`;
 
+  // Social providers are shown only once configured (set the env flag / bot id).
+  const showGoogle = process.env.NEXT_PUBLIC_AUTH_GOOGLE === "true";
+  const showFacebook = process.env.NEXT_PUBLIC_AUTH_FACEBOOK === "true";
+  const showTelegram = telegramConfigured();
+  const anySocial = showGoogle || showFacebook || showTelegram;
+
   const oauth = async (provider: "google" | "facebook") => {
     const label = provider === "google" ? "Google" : "Facebook";
     setError(null);
@@ -166,32 +172,43 @@ function LoginInner() {
             {mode === "signin" ? "Sign in to Edverse" : "Create your account"}
           </h2>
           <p className="mt-1.5 text-sm text-muted">
-            Use your Google, Facebook, Telegram, or email account to continue to
-            onboarding.
+            {anySocial
+              ? "Use your social or email account to continue to onboarding."
+              : "Sign in with your work email to continue to onboarding."}
           </p>
 
-          <div className="mt-6 space-y-3">
-            <SocialButton onClick={() => oauth("google")} busy={busy === "google"}>
-              <GoogleIcon className="h-5 w-5" />
-              Continue with Google
-            </SocialButton>
-            <SocialButton onClick={() => oauth("facebook")} busy={busy === "facebook"}>
-              <FacebookIcon className="h-5 w-5" />
-              Continue with Facebook
-            </SocialButton>
-            <SocialButton onClick={telegram} busy={busy === "telegram"}>
-              <TelegramIcon className="h-5 w-5" />
-              Continue with Telegram
-            </SocialButton>
-          </div>
+          {anySocial && (
+            <>
+              <div className="mt-6 space-y-3">
+                {showGoogle && (
+                  <SocialButton onClick={() => oauth("google")} busy={busy === "google"}>
+                    <GoogleIcon className="h-5 w-5" />
+                    Continue with Google
+                  </SocialButton>
+                )}
+                {showFacebook && (
+                  <SocialButton onClick={() => oauth("facebook")} busy={busy === "facebook"}>
+                    <FacebookIcon className="h-5 w-5" />
+                    Continue with Facebook
+                  </SocialButton>
+                )}
+                {showTelegram && (
+                  <SocialButton onClick={telegram} busy={busy === "telegram"}>
+                    <TelegramIcon className="h-5 w-5" />
+                    Continue with Telegram
+                  </SocialButton>
+                )}
+              </div>
 
-          <div className="my-5 flex items-center gap-3 text-xs text-muted">
-            <span className="h-px flex-1 bg-border" />
-            or with email
-            <span className="h-px flex-1 bg-border" />
-          </div>
+              <div className="my-5 flex items-center gap-3 text-xs text-muted">
+                <span className="h-px flex-1 bg-border" />
+                or with email
+                <span className="h-px flex-1 bg-border" />
+              </div>
+            </>
+          )}
 
-          <form onSubmit={submitEmail} className="space-y-3">
+          <form onSubmit={submitEmail} className={anySocial ? "space-y-3" : "mt-6 space-y-3"}>
             {mode === "signup" && (
               <Labeled label="Full name">
                 <input
