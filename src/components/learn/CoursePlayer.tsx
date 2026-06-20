@@ -4,57 +4,45 @@ import { useEffect, useMemo, useState } from "react";
 import { Course, flattenLessons } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { BlockRenderer } from "@/components/blocks/BlockRenderer";
+import { useProgress } from "@/lib/progress";
 import { Sidebar } from "./Sidebar";
 
 export function CoursePlayer({ course }: { course: Course }) {
   const flat = useMemo(() => flattenLessons(course), [course]);
-  const storageKey = `edverse:progress:${course.id}`;
+  const { ready, initial, persist } = useProgress(course.id);
 
   const [index, setIndex] = useState(0);
   const [open, setOpen] = useState(false);
   const [completed, setCompleted] = useState<Set<string>>(new Set());
-  const [hydrated, setHydrated] = useState(false);
+  const [seeded, setSeeded] = useState(false);
 
-  // Restore progress + last position.
+  // Seed local state from saved progress once it arrives.
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(storageKey);
-      if (raw) {
-        const saved = JSON.parse(raw) as { done: string[]; index: number };
-        setCompleted(new Set(saved.done ?? []));
-        if (typeof saved.index === "number") setIndex(saved.index);
-      }
-    } catch {
-      /* ignore */
-    }
-    setHydrated(true);
-  }, [storageKey]);
-
-  // Persist.
-  useEffect(() => {
-    if (!hydrated) return;
-    localStorage.setItem(
-      storageKey,
-      JSON.stringify({ done: [...completed], index })
-    );
-  }, [completed, index, hydrated, storageKey]);
+    if (!ready || !initial || seeded) return;
+    setCompleted(new Set(initial.done));
+    setIndex(Math.min(initial.index, flat.length - 1));
+    setSeeded(true);
+  }, [ready, initial, seeded, flat.length]);
 
   const current = flat[index];
   const isFirst = index === 0;
   const isLast = index === flat.length - 1;
 
-  const markDone = (lessonId: string) =>
-    setCompleted((prev) => new Set(prev).add(lessonId));
-
   const goTo = (i: number) => {
     setIndex(i);
     setOpen(false);
+    persist([...completed], i);
     if (typeof window !== "undefined") window.scrollTo({ top: 0 });
   };
 
   const next = () => {
-    markDone(current.lesson.id);
-    if (!isLast) goTo(index + 1);
+    const nextDone = new Set(completed).add(current.lesson.id);
+    const nextIndex = isLast ? index : index + 1;
+    setCompleted(nextDone);
+    setIndex(nextIndex);
+    setOpen(false);
+    persist([...nextDone], nextIndex);
+    if (typeof window !== "undefined") window.scrollTo({ top: 0 });
   };
   const prev = () => !isFirst && goTo(index - 1);
 

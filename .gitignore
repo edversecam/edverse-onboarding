@@ -42,3 +42,8 @@ next-env.d.ts
 
 # local dev
 dev.log
+
+.vercel
+
+# keep the example env
+!.env.example

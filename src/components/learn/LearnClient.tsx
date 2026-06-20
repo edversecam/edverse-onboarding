@@ -1,16 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { useCourse } from "@/lib/store";
+import { useCourse, useCoursesLoaded } from "@/lib/store";
 import { CoursePlayer } from "./CoursePlayer";
 
 export function LearnClient({ courseId }: { courseId: string }) {
   const course = useCourse(courseId);
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+  const loaded = useCoursesLoaded();
 
-  if (!mounted) {
+  if (!loaded) {
     return (
       <div className="grid min-h-dvh place-items-center text-muted">
         Loading…

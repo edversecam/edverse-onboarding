@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
 import { Logo } from "@/components/brand/Logo";
 import {
   addLesson,
@@ -14,16 +13,17 @@ import {
   patchCourse,
   patchModule,
   useCourse,
+  useCoursesLoaded,
 } from "@/lib/store";
 
 export default function CourseEditor() {
   const { courseId } = useParams<{ courseId: string }>();
   const course = useCourse(courseId);
+  const loaded = useCoursesLoaded();
   const router = useRouter();
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
 
-  if (!mounted) return null;
+  if (!loaded)
+    return <div className="grid min-h-dvh place-items-center text-muted">Loading…</div>;
   if (!course)
     return (
       <div className="grid min-h-dvh place-items-center text-muted">

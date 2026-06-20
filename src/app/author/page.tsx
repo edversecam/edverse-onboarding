@@ -2,16 +2,21 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
 import { Logo } from "@/components/brand/Logo";
-import { createCourse, deleteCourse, useCourses } from "@/lib/store";
+import { AccountMenu } from "@/components/AccountMenu";
+import {
+  createCourse,
+  deleteCourse,
+  importStarterCourse,
+  useCourses,
+  useCoursesLoaded,
+} from "@/lib/store";
 import { flattenLessons } from "@/lib/types";
 
 export default function AuthorDashboard() {
   const courses = useCourses();
+  const loaded = useCoursesLoaded();
   const router = useRouter();
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
 
   const onCreate = () => {
     const c = createCourse();
@@ -39,6 +44,7 @@ export default function AuthorDashboard() {
             >
               + New course
             </button>
+            <AccountMenu />
           </div>
         </div>
       </header>
@@ -52,7 +58,7 @@ export default function AuthorDashboard() {
         </p>
 
         <div className="mt-8 space-y-3">
-          {(mounted ? courses : []).map((course) => {
+          {courses.map((course) => {
             const lessons = flattenLessons(course);
             return (
               <div
@@ -93,13 +99,27 @@ export default function AuthorDashboard() {
             );
           })}
 
-          {mounted && courses.length === 0 && (
-            <div className="rounded-xl border border-dashed border-border p-10 text-center text-muted">
-              No courses yet.{" "}
-              <button onClick={onCreate} className="font-semibold text-brand-700 underline">
-                Create your first course
-              </button>
-              .
+          {!loaded && (
+            <div className="h-20 animate-pulse rounded-xl border border-border bg-surface-2" />
+          )}
+
+          {loaded && courses.length === 0 && (
+            <div className="rounded-xl border border-dashed border-border p-10 text-center">
+              <p className="text-muted">No courses yet. Start from scratch or load the sample.</p>
+              <div className="mt-4 flex justify-center gap-3">
+                <button
+                  onClick={onCreate}
+                  className="rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white hover:bg-brand-600"
+                >
+                  + New course
+                </button>
+                <button
+                  onClick={() => importStarterCourse()}
+                  className="rounded-lg border border-border px-4 py-2 text-sm font-semibold text-foreground hover:bg-surface-2"
+                >
+                  Import starter course
+                </button>
+              </div>
             </div>
           )}
         </div>

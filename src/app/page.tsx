@@ -1,27 +1,33 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
 import { Logo } from "@/components/brand/Logo";
-import { useCourses } from "@/lib/store";
+import { AccountMenu } from "@/components/AccountMenu";
+import { useCourses, useCoursesLoaded } from "@/lib/store";
+import { useUser } from "@/lib/auth";
 import { flattenLessons } from "@/lib/types";
 
 export default function Home() {
   const courses = useCourses();
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+  const loaded = useCoursesLoaded();
+  const user = useUser();
 
   return (
     <div className="min-h-dvh">
       <header className="border-b border-border bg-surface">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
           <Logo />
-          <Link
-            href="/author"
-            className="rounded-lg border border-border px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-surface-2"
-          >
-            Author courses
-          </Link>
+          <div className="flex items-center gap-2">
+            {user && (
+              <Link
+                href="/author"
+                className="rounded-lg border border-border px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-surface-2"
+              >
+                Author courses
+              </Link>
+            )}
+            <AccountMenu />
+          </div>
         </div>
       </header>
 
@@ -47,7 +53,7 @@ export default function Home() {
           Your courses
         </h2>
         <div className="grid gap-5 sm:grid-cols-2">
-          {(mounted ? courses : []).map((course) => {
+          {courses.map((course) => {
             const lessons = flattenLessons(course);
             return (
               <Link
@@ -80,10 +86,31 @@ export default function Home() {
               </Link>
             );
           })}
-          {!mounted && (
+          {!loaded && (
             <div className="h-44 animate-pulse rounded-2xl border border-border bg-surface-2" />
           )}
         </div>
+
+        {loaded && courses.length === 0 && (
+          <div className="rounded-2xl border border-dashed border-border bg-surface p-10 text-center">
+            {user ? (
+              <p className="text-muted">
+                No courses published yet.{" "}
+                <Link href="/author" className="font-semibold text-brand-700 underline">
+                  Create one in the author studio
+                </Link>
+                .
+              </p>
+            ) : (
+              <p className="text-muted">
+                <Link href="/login" className="font-semibold text-brand-700 underline">
+                  Sign in
+                </Link>{" "}
+                to see your assigned onboarding courses.
+              </p>
+            )}
+          </div>
+        )}
       </section>
     </div>
   );

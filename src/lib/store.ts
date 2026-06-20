@@ -1,64 +1,95 @@
 "use client";
 
+import { useEffect } from "react";
 import { useSyncExternalStore } from "react";
 import { Block, Course, Lesson, Module } from "./types";
+import { createClient } from "./supabase/client";
 import { sampleCourse } from "@/data/sample-course";
 
 /**
- * Client-side course store backed by localStorage.
+ * Supabase-backed course store.
  *
- * This is the single data-access seam for authoring + learning. Phase 2 swaps
- * the bodies of these functions for Supabase calls; components keep using the
- * same `useCourses` / `useCourse` hooks and mutators.
+ * Each course is persisted as a single `courses.data` jsonb document that
+ * matches the typed `Course` model. The UI keeps using `useCourses` /
+ * `useCourse` and the synchronous mutators below; mutations update an
+ * in-memory cache optimistically and are persisted to Supabase (debounced).
  */
-const KEY = "edverse:courses:v1";
+
+const supabase = createClient();
+
+const EMPTY: Course[] = [];
+let cache: Course[] = EMPTY;
+let loaded = false;
+let loadPromise: Promise<void> | null = null;
 const listeners = new Set<() => void>();
 
-let cache: Course[] | null = null;
-
-/** Stable reference for SSR / first paint so useSyncExternalStore doesn't loop. */
-const serverSnapshot: Course[] = [sampleCourse];
-const getServerSnapshot = () => serverSnapshot;
-
-function read(): Course[] {
-  if (cache) return cache;
-  if (typeof window === "undefined") return [sampleCourse];
-  try {
-    const raw = localStorage.getItem(KEY);
-    if (raw) {
-      cache = JSON.parse(raw) as Course[];
-    } else {
-      cache = [structuredClone(sampleCourse)];
-      localStorage.setItem(KEY, JSON.stringify(cache));
-    }
-  } catch {
-    cache = [structuredClone(sampleCourse)];
-  }
-  return cache!;
-}
-
-function write(courses: Course[]) {
-  cache = courses;
-  if (typeof window !== "undefined") {
-    localStorage.setItem(KEY, JSON.stringify(courses));
-  }
+function emit() {
   listeners.forEach((l) => l());
 }
-
 function subscribe(cb: () => void) {
   listeners.add(cb);
   return () => listeners.delete(cb);
 }
 
+async function ensureLoaded() {
+  if (loaded || loadPromise) return loadPromise ?? undefined;
+  loadPromise = (async () => {
+    const { data, error } = await supabase
+      .from("courses")
+      .select("data")
+      .order("created_at", { ascending: true });
+    if (!error && data) {
+      cache = data.map((row) => row.data as Course);
+    }
+    loaded = true;
+    emit();
+  })();
+  return loadPromise;
+}
+
+/* ───────────────────────────── Persistence ───────────────────────────── */
+
+const timers = new Map<string, ReturnType<typeof setTimeout>>();
+
+function persist(course: Course, immediate = false) {
+  const run = () => {
+    supabase
+      .from("courses")
+      .upsert({ id: course.id, title: course.title, data: course, published: true })
+      .then(({ error }) => {
+        if (error) console.error("Edverse: failed to save course", error);
+      });
+    timers.delete(course.id);
+  };
+  const existing = timers.get(course.id);
+  if (existing) clearTimeout(existing);
+  if (immediate) run();
+  else timers.set(course.id, setTimeout(run, 600));
+}
+
+function setCache(next: Course[]) {
+  cache = next;
+  emit();
+}
+
 /* ───────────────────────────── Reads (hooks) ───────────────────────────── */
 
 export function useCourses(): Course[] {
-  return useSyncExternalStore(subscribe, read, getServerSnapshot);
+  useEffect(() => {
+    ensureLoaded();
+  }, []);
+  return useSyncExternalStore(subscribe, () => cache, () => EMPTY);
+}
+
+export function useCoursesLoaded(): boolean {
+  useEffect(() => {
+    ensureLoaded();
+  }, []);
+  return useSyncExternalStore(subscribe, () => loaded, () => false);
 }
 
 export function useCourse(id: string): Course | undefined {
-  const courses = useCourses();
-  return courses.find((c) => c.id === id);
+  return useCourses().find((c) => c.id === id);
 }
 
 /* ───────────────────────────── Mutations ───────────────────────────── */
@@ -67,7 +98,14 @@ export const uid = (prefix = "id") =>
   `${prefix}_${Math.random().toString(36).slice(2, 9)}`;
 
 function update(courseId: string, fn: (c: Course) => Course) {
-  write(read().map((c) => (c.id === courseId ? fn(c) : c)));
+  let updated: Course | undefined;
+  const next = cache.map((c) => {
+    if (c.id !== courseId) return c;
+    updated = fn(c);
+    return updated;
+  });
+  setCache(next);
+  if (updated) persist(updated);
 }
 
 export function createCourse(): Course {
@@ -85,12 +123,31 @@ export function createCourse(): Course {
       },
     ],
   };
-  write([...read(), course]);
+  setCache([...cache, course]);
+  persist(course, true);
+  return course;
+}
+
+/** Upsert the bundled sample course so a fresh workspace has content to explore. */
+export function importStarterCourse(): Course {
+  const course = structuredClone(sampleCourse);
+  const exists = cache.some((c) => c.id === course.id);
+  setCache(exists ? cache.map((c) => (c.id === course.id ? course : c)) : [...cache, course]);
+  persist(course, true);
   return course;
 }
 
 export function deleteCourse(courseId: string) {
-  write(read().filter((c) => c.id !== courseId));
+  setCache(cache.filter((c) => c.id !== courseId));
+  const t = timers.get(courseId);
+  if (t) clearTimeout(t);
+  supabase
+    .from("courses")
+    .delete()
+    .eq("id", courseId)
+    .then(({ error }) => {
+      if (error) console.error("Edverse: failed to delete course", error);
+    });
 }
 
 export function patchCourse(courseId: string, patch: Partial<Course>) {
@@ -102,11 +159,7 @@ export function addModule(courseId: string) {
     ...c,
     modules: [
       ...c.modules,
-      {
-        id: uid("m"),
-        title: `Module ${c.modules.length + 1}`,
-        lessons: [],
-      },
+      { id: uid("m"), title: `Module ${c.modules.length + 1}`, lessons: [] },
     ],
   }));
 }
@@ -140,18 +193,12 @@ export function addLesson(courseId: string, moduleId: string): Lesson {
   return lesson;
 }
 
-export function patchLesson(
-  courseId: string,
-  lessonId: string,
-  patch: Partial<Lesson>
-) {
+export function patchLesson(courseId: string, lessonId: string, patch: Partial<Lesson>) {
   update(courseId, (c) => ({
     ...c,
     modules: c.modules.map((m) => ({
       ...m,
-      lessons: m.lessons.map((l) =>
-        l.id === lessonId ? { ...l, ...patch } : l
-      ),
+      lessons: m.lessons.map((l) => (l.id === lessonId ? { ...l, ...patch } : l)),
     })),
   }));
 }
@@ -166,12 +213,7 @@ export function deleteLesson(courseId: string, lessonId: string) {
   }));
 }
 
-export function moveLesson(
-  courseId: string,
-  moduleId: string,
-  lessonId: string,
-  dir: -1 | 1
-) {
+export function moveLesson(courseId: string, moduleId: string, lessonId: string, dir: -1 | 1) {
   update(courseId, (c) => ({
     ...c,
     modules: c.modules.map((m) =>
@@ -180,11 +222,7 @@ export function moveLesson(
   }));
 }
 
-export function setLessonBlocks(
-  courseId: string,
-  lessonId: string,
-  blocks: Block[]
-) {
+export function setLessonBlocks(courseId: string, lessonId: string, blocks: Block[]) {
   patchLesson(courseId, lessonId, { blocks });
 }
 

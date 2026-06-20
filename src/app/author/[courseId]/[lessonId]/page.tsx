@@ -2,22 +2,22 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Logo } from "@/components/brand/Logo";
 import { BlockEditor } from "@/components/author/BlockEditor";
 import { BlockRenderer } from "@/components/blocks/BlockRenderer";
 import { BLOCK_LABELS, newBlock } from "@/lib/factories";
 import { Block, BlockKind } from "@/lib/types";
-import { patchLesson, setLessonBlocks, useCourse } from "@/lib/store";
+import { patchLesson, setLessonBlocks, useCourse, useCoursesLoaded } from "@/lib/store";
 
 export default function LessonEditor() {
   const { courseId, lessonId } = useParams<{ courseId: string; lessonId: string }>();
   const course = useCourse(courseId);
-  const [mounted, setMounted] = useState(false);
+  const loaded = useCoursesLoaded();
   const [open, setOpen] = useState<string | null>(null);
-  useEffect(() => setMounted(true), []);
 
-  if (!mounted) return null;
+  if (!loaded)
+    return <div className="grid min-h-dvh place-items-center text-muted">Loading…</div>;
 
   const found = course?.modules
     .flatMap((m) => m.lessons.map((l) => ({ m, l })))
