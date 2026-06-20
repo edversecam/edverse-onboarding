@@ -17,11 +17,10 @@ enabling a provider below, reveal its button with an env var (in Vercel +
 Supabase project: **edverse** (`ugrbjajtazdgjfhdcbtx`) ·
 Dashboard → Authentication → Providers.
 
-## Two-factor authentication (already on)
-- After the first sign-in, every user is sent to **/security/setup** to scan a
-  QR code with an authenticator app (Google Authenticator, Authy, 1Password…).
-- On later logins they enter a 6-digit code at **/security/verify**.
-- Enforced globally by `MfaGuard` (`src/components/auth/MfaGuard.tsx`).
+## Two-factor authentication
+Currently **disabled** — sign-in goes straight through with email/password (or a
+social provider). Supabase still supports TOTP MFA if you want to bring it back
+later (`supabase.auth.mfa.enroll/challenge/verify`).
 
 ## Google
 1. Google Cloud Console → APIs & Services → Credentials → **OAuth client ID** (Web).

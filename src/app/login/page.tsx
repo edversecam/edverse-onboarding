@@ -99,7 +99,6 @@ function LoginInner() {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) setError(error.message);
       else {
-        // MfaGuard will step up to 2FA (enrol or verify) before any app page.
         router.push(next);
         router.refresh();
       }
@@ -161,7 +160,7 @@ function LoginInner() {
           <Divider />
           <Stat value="~45m" label="To complete" />
           <Divider />
-          <Stat value="Secure" label="2-factor login" />
+          <Stat value="Secure" label="Encrypted login" />
         </div>
       </aside>
 
@@ -287,7 +286,7 @@ function LoginInner() {
           </p>
 
           <p className="mt-6 flex items-center justify-center gap-1.5 text-center text-xs text-muted">
-            <LockIcon /> Protected by two-factor authentication
+            <LockIcon /> Secure, encrypted sign-in
           </p>
         </div>
       </main>
