@@ -1,10 +1,15 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { Logo } from "@/components/brand/Logo";
-import { sampleCourse } from "@/data/sample-course";
+import { useCourses } from "@/lib/store";
 import { flattenLessons } from "@/lib/types";
 
 export default function Home() {
-  const courses = [sampleCourse];
+  const courses = useCourses();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   return (
     <div className="min-h-dvh">
@@ -12,10 +17,10 @@ export default function Home() {
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
           <Logo />
           <Link
-            href={`/learn/${sampleCourse.id}`}
-            className="rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-600"
+            href="/author"
+            className="rounded-lg border border-border px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-surface-2"
           >
-            Start onboarding
+            Author courses
           </Link>
         </div>
       </header>
@@ -42,7 +47,7 @@ export default function Home() {
           Your courses
         </h2>
         <div className="grid gap-5 sm:grid-cols-2">
-          {courses.map((course) => {
+          {(mounted ? courses : []).map((course) => {
             const lessons = flattenLessons(course);
             return (
               <Link
@@ -75,6 +80,9 @@ export default function Home() {
               </Link>
             );
           })}
+          {!mounted && (
+            <div className="h-44 animate-pulse rounded-2xl border border-border bg-surface-2" />
+          )}
         </div>
       </section>
     </div>
