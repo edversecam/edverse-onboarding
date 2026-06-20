@@ -1,0 +1,80 @@
+@import "tailwindcss";
+
+/* ───────────────────────────── Edverse design tokens ───────────────────────────── */
+:root {
+  /* Brand — pulled from the Edverse cap logo */
+  --brand: #1d36ff;
+  --brand-600: #1730e6;
+  --brand-700: #1227bd;
+  --brand-tint: #eef1ff;
+  --brand-tint-2: #dde3ff;
+
+  --background: #f6f7fb;
+  --surface: #ffffff;
+  --surface-2: #f3f5fa;
+  --foreground: #14172b;
+  --muted: #5b6178;
+  --border: #e4e7f0;
+
+  --success: #15a06b;
+  --success-tint: #e6f6ef;
+  --danger: #d92d4b;
+  --danger-tint: #fce8ec;
+  --warning: #c98a00;
+
+  --radius: 0.875rem;
+  --shadow-card: 0 1px 2px rgba(20, 23, 43, 0.04), 0 8px 24px rgba(20, 23, 43, 0.06);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+
+  --color-brand: var(--brand);
+  --color-brand-600: var(--brand-600);
+  --color-brand-700: var(--brand-700);
+  --color-brand-tint: var(--brand-tint);
+  --color-brand-tint-2: var(--brand-tint-2);
+
+  --color-success: var(--success);
+  --color-success-tint: var(--success-tint);
+  --color-danger: var(--danger);
+  --color-danger-tint: var(--danger-tint);
+  --color-warning: var(--warning);
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-lora), ui-serif, Georgia, serif;
+
+  --radius-xl: var(--radius);
+}
+
+* {
+  border-color: var(--border);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, .font-display {
+  font-family: var(--font-serif);
+  letter-spacing: -0.01em;
+}
+
+/* Thin, branded scrollbars for the sidebar / content */
+.scroll-slim::-webkit-scrollbar { width: 8px; height: 8px; }
+.scroll-slim::-webkit-scrollbar-thumb { background: var(--border); border-radius: 999px; }
+.scroll-slim::-webkit-scrollbar-thumb:hover { background: #cfd4e3; }
+
+@keyframes pop-in {
+  from { opacity: 0; transform: translateY(4px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.animate-pop { animation: pop-in 0.18s ease-out; }
