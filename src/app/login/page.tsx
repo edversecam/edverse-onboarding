@@ -29,18 +29,40 @@ function LoginInner() {
     `${window.location.origin}/auth/callback?next=${encodeURIComponent(n)}`;
 
   const oauth = async (provider: "google" | "facebook") => {
+    const label = provider === "google" ? "Google" : "Facebook";
     setError(null);
     setBusy(provider);
-    const { error } = await supabase.auth.signInWithOAuth({
+
+    // Build the authorize URL without navigating, so we can detect an
+    // un-enabled provider and show a friendly message instead of a raw error.
+    const { data, error } = await supabase.auth.signInWithOAuth({
       provider,
-      options: { redirectTo: callbackUrl(next) },
+      options: { redirectTo: callbackUrl(next), skipBrowserRedirect: true },
     });
-    if (error) {
+    if (error || !data?.url) {
+      setError(`${label} sign-in isn't enabled yet. Ask your admin to turn it on in Supabase.`);
+      setBusy(null);
+      return;
+    }
+
+    // An enabled provider returns a redirect to the provider; a disabled one
+    // returns a 400. Cross-origin, that surfaces as opaqueredirect vs. error.
+    let enabled = true;
+    try {
+      const probe = await fetch(data.url, { redirect: "manual" });
+      enabled = probe.type === "opaqueredirect" || probe.ok;
+    } catch {
+      enabled = false;
+    }
+
+    if (!enabled) {
       setError(
-        `${provider === "google" ? "Google" : "Facebook"} sign-in isn't enabled yet. ${error.message}`
+        `${label} sign-in isn't switched on yet. An admin needs to enable ${label} in Supabase (see docs/AUTH-SETUP.md).`
       );
       setBusy(null);
+      return;
     }
+    window.location.href = data.url;
   };
 
   const telegram = async () => {
