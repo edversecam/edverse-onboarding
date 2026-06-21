@@ -39,9 +39,7 @@ export default function CourseEditor() {
       <header className="sticky top-0 z-10 border-b border-border bg-surface">
         <div className="mx-auto flex max-w-4xl items-center justify-between gap-3 px-6 py-3">
           <div className="flex items-center gap-3">
-            <Link href="/author">
-              <Logo showWordmark={false} />
-            </Link>
+            <Logo showWordmark={false} href="/author" />
             <span className="text-sm text-muted">Course editor</span>
           </div>
           <Link

@@ -58,9 +58,7 @@ export default function LessonEditor() {
       <header className="sticky top-0 z-10 border-b border-border bg-surface">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-6 py-3">
           <div className="flex min-w-0 items-center gap-3">
-            <Link href={`/author/${course.id}`}>
-              <Logo showWordmark={false} />
-            </Link>
+            <Logo showWordmark={false} href={`/author/${course.id}`} />
             <div className="min-w-0">
               <p className="truncate text-xs text-muted">
                 {course.title} · {mod.title}

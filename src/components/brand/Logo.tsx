@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 /**
@@ -39,15 +40,30 @@ export function Logo({
   className,
   showWordmark = true,
   light = false,
+  href = "/",
 }: {
   className?: string;
   showWordmark?: boolean;
   light?: boolean;
+  /** Where clicking the logo goes. Defaults to the home page. Pass null to render a non-clickable mark. */
+  href?: string | null;
 }) {
-  return (
+  const inner = (
     <span className={cn("inline-flex items-center gap-2", className)}>
       <LogoMark className={light ? "text-white" : "text-brand"} />
       {showWordmark && <Wordmark className={light ? "text-white" : undefined} />}
     </span>
+  );
+
+  if (href === null) return inner;
+
+  return (
+    <Link
+      href={href}
+      aria-label="Go to home"
+      className="inline-flex rounded-md outline-none transition hover:opacity-80 focus-visible:ring-2 focus-visible:ring-brand"
+    >
+      {inner}
+    </Link>
   );
 }
