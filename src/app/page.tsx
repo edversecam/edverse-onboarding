@@ -5,13 +5,15 @@ import { Logo } from "@/components/brand/Logo";
 import { AccountMenu } from "@/components/AccountMenu";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useCourses, useCoursesLoaded } from "@/lib/store";
-import { useUser } from "@/lib/auth";
+import { useRole, useUser } from "@/lib/auth";
 import { flattenLessons } from "@/lib/types";
 
 export default function Home() {
   const courses = useCourses();
   const loaded = useCoursesLoaded();
   const user = useUser();
+  const role = useRole();
+  const isAdmin = role === "admin";
 
   return (
     <div className="min-h-dvh">
@@ -19,7 +21,7 @@ export default function Home() {
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
           <Logo />
           <div className="flex items-center gap-2">
-            {user && (
+            {isAdmin && (
               <Link
                 href="/author"
                 className="rounded-lg border border-border px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-surface-2"
@@ -95,7 +97,7 @@ export default function Home() {
 
         {loaded && courses.length === 0 && (
           <div className="rounded-2xl border border-dashed border-border bg-surface p-10 text-center">
-            {user ? (
+            {isAdmin ? (
               <p className="text-muted">
                 No courses published yet.{" "}
                 <Link href="/author" className="font-semibold text-brand-700 underline">
@@ -103,6 +105,8 @@ export default function Home() {
                 </Link>
                 .
               </p>
+            ) : user ? (
+              <p className="text-muted">No onboarding courses assigned to you yet.</p>
             ) : (
               <p className="text-muted">
                 <Link href="/login" className="font-semibold text-brand-700 underline">
