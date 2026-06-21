@@ -13,9 +13,25 @@ export function CoursePlayer({ course }: { course: Course }) {
   const { ready, initial, persist } = useProgress(course.id);
 
   const [index, setIndex] = useState(0);
-  const [open, setOpen] = useState(false);
+  // Open by default on desktop, closed on mobile. CoursePlayer only mounts
+  // client-side (LearnClient gates on load), so reading matchMedia here is safe.
+  const [open, setOpen] = useState(
+    () =>
+      typeof window !== "undefined" &&
+      window.matchMedia("(min-width: 1024px)").matches
+  );
   const [completed, setCompleted] = useState<Set<string>>(new Set());
   const [seeded, setSeeded] = useState(false);
+
+  // Only collapse the drawer automatically on mobile; keep it open on desktop.
+  const closeOnMobile = () => {
+    if (
+      typeof window !== "undefined" &&
+      !window.matchMedia("(min-width: 1024px)").matches
+    ) {
+      setOpen(false);
+    }
+  };
 
   // Seed local state from saved progress once it arrives.
   useEffect(() => {
@@ -31,7 +47,7 @@ export function CoursePlayer({ course }: { course: Course }) {
 
   const goTo = (i: number) => {
     setIndex(i);
-    setOpen(false);
+    closeOnMobile();
     persist([...completed], i);
     if (typeof window !== "undefined") window.scrollTo({ top: 0 });
   };
@@ -41,7 +57,7 @@ export function CoursePlayer({ course }: { course: Course }) {
     const nextIndex = isLast ? index : index + 1;
     setCompleted(nextDone);
     setIndex(nextIndex);
-    setOpen(false);
+    closeOnMobile();
     persist([...nextDone], nextIndex);
     if (typeof window !== "undefined") window.scrollTo({ top: 0 });
   };

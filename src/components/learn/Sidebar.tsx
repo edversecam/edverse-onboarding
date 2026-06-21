@@ -36,8 +36,8 @@ export function Sidebar({
 
       <aside
         className={cn(
-          "fixed z-40 flex h-dvh w-[300px] flex-col border-r border-border bg-surface transition-transform duration-300 lg:static lg:h-dvh lg:translate-x-0",
-          open ? "translate-x-0" : "-translate-x-full"
+          "fixed inset-y-0 left-0 z-40 flex h-dvh w-[300px] flex-col border-r border-border bg-surface transition-transform duration-300 lg:static lg:h-dvh",
+          open ? "translate-x-0 lg:translate-x-0" : "-translate-x-full lg:hidden"
         )}
       >
         {/* Brand */}
