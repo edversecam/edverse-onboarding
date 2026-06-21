@@ -127,6 +127,8 @@ export type BlockKind =
 export interface BlockBase {
   id: ID;
   kind: BlockKind;
+  /** Optional author-facing name to identify the block in the editor (not shown to learners). */
+  label?: string;
 }
 
 export interface TextBlock extends BlockBase {

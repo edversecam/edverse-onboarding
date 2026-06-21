@@ -147,13 +147,20 @@ export default function LessonEditor() {
             {blocks.map((b, i) => (
               <div key={b.id} className="rounded-xl border border-border bg-surface shadow-[var(--shadow-card)]">
                 <div className="flex items-center gap-2 border-b border-border px-4 py-2.5">
-                  <span className="rounded-md bg-brand-tint px-2 py-0.5 text-xs font-semibold text-brand-700">
+                  <span className="shrink-0 rounded-md bg-brand-tint px-2 py-0.5 text-xs font-semibold text-brand-700">
                     {BLOCK_LABELS[b.kind]}
                   </span>
+                  <input
+                    value={b.label ?? ""}
+                    onChange={(e) => updateBlock(b.id, { ...b, label: e.target.value })}
+                    placeholder={blockPlaceholder(b)}
+                    aria-label="Block name"
+                    className="min-w-0 flex-1 rounded-md bg-transparent px-1.5 py-1 text-sm font-medium text-foreground outline-none transition placeholder:font-normal placeholder:text-muted hover:bg-surface-2 focus:bg-surface-2"
+                  />
                   <button
                     type="button"
                     onClick={() => setOpen(open === b.id ? null : b.id)}
-                    className="ml-auto text-sm font-medium text-muted hover:text-brand-700"
+                    className="shrink-0 text-sm font-medium text-muted hover:text-brand-700"
                   >
                     {open === b.id ? "Collapse" : "Edit"}
                   </button>
@@ -194,6 +201,13 @@ export default function LessonEditor() {
       </main>
     </div>
   );
+}
+
+/** Suggested name shown when a block has no custom label yet. */
+function blockPlaceholder(b: Block): string {
+  if ("heading" in b && b.heading) return b.heading;
+  if (b.kind === "callout" && b.title) return b.title;
+  return "Name this block…";
 }
 
 function IconBtn({
