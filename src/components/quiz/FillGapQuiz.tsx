@@ -15,25 +15,32 @@ export function FillGapQuiz({
   const [picked, setPicked] = useState<Record<string, string>>({});
   const [status, setStatus] = useState<QuizStatus>("idle");
 
-  // Split "Sentence with {{1}} and {{2}}." into text + blank tokens.
+  // Split "Sentence with {{1}} and {{2}}." into text + blank tokens. A token
+  // that has no matching blank (e.g. the author removed it) renders as plain
+  // text rather than crashing.
+  const blanks = quiz.blanks ?? [];
   const segments = useMemo(() => {
-    const parts = quiz.text.split(/\{\{(\d+)\}\}/g);
-    return parts.map((part, i) =>
-      i % 2 === 1
-        ? { type: "blank" as const, blank: quiz.blanks[Number(part) - 1] }
-        : { type: "text" as const, text: part }
-    );
-  }, [quiz.text, quiz.blanks]);
+    const parts = (quiz.text ?? "").split(/\{\{(\d+)\}\}/g);
+    return parts.map((part, i) => {
+      if (i % 2 === 1) {
+        const blank = blanks[Number(part) - 1];
+        return blank
+          ? { type: "blank" as const, blank }
+          : { type: "text" as const, text: `{{${part}}}` };
+      }
+      return { type: "text" as const, text: part };
+    });
+  }, [quiz.text, blanks]);
 
   const optionsFor = (blankId: string, answer: string, extra?: string[]) =>
     seededShuffle([answer, ...(extra ?? [])], quiz.id + blankId);
 
-  const allPicked = quiz.blanks.every((b) => picked[b.id]);
+  const allPicked = blanks.length > 0 && blanks.every((b) => picked[b.id]);
 
   const check = () => {
-    const ok = quiz.blanks.every(
-      (b) => picked[b.id]?.toLowerCase() === b.answer.toLowerCase()
-    );
+    const ok =
+      blanks.length > 0 &&
+      blanks.every((b) => picked[b.id]?.toLowerCase() === b.answer.toLowerCase());
     const s: QuizStatus = ok ? "correct" : "incorrect";
     setStatus(s);
     onResult?.(s);
@@ -92,7 +99,7 @@ export function FillGapQuiz({
       {status === "incorrect" && (
         <p className="mt-3 text-xs text-muted">
           Correct answers:{" "}
-          {quiz.blanks.map((b) => b.answer).join(", ")}
+          {blanks.map((b) => b.answer).join(", ")}
         </p>
       )}
     </QuizShell>

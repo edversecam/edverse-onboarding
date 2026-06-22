@@ -10,8 +10,10 @@ import { BlockRenderer } from "@/components/blocks/BlockRenderer";
 import { BLOCK_LABELS, newBlock } from "@/lib/factories";
 import { Block, BlockKind } from "@/lib/types";
 import { patchLesson, setLessonBlocks, useCourse, useCoursesLoaded } from "@/lib/store";
+import { useAdminOnly } from "@/lib/auth";
 
 export default function LessonEditor() {
+  useAdminOnly();
   const { courseId, lessonId } = useParams<{ courseId: string; lessonId: string }>();
   const course = useCourse(courseId);
   const loaded = useCoursesLoaded();

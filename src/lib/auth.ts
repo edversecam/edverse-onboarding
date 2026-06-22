@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "./supabase/client";
 
@@ -43,4 +44,15 @@ export function useRole(): Role | null {
 
 export async function signOut() {
   await createClient().auth.signOut();
+}
+
+/** Redirect away from admin-only pages once we know the user is not an admin.
+ *  Returns true while still allowed (loading or admin). */
+export function useAdminOnly(): boolean {
+  const role = useRole();
+  const router = useRouter();
+  useEffect(() => {
+    if (role && role !== "admin") router.replace("/");
+  }, [role, router]);
+  return role === null || role === "admin";
 }

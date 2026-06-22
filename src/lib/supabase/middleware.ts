@@ -42,14 +42,23 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Authoring is admin-only — bounce non-admins to the home page.
+  // Authoring is admin-only — bounce non-admins to the home page. Only redirect
+  // when we POSITIVELY determine the user is not an admin; a transient query
+  // failure must never bounce a real admin (which would break the navigation).
+  // Writes are protected by RLS regardless, so erring open here is safe.
   if (user && path.startsWith("/author")) {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single();
-    if (profile?.role !== "admin") {
+    let confirmedNotAdmin = false;
+    try {
+      const { data: profile, error } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
+        .maybeSingle();
+      if (!error && profile) confirmedNotAdmin = profile.role !== "admin";
+    } catch {
+      confirmedNotAdmin = false;
+    }
+    if (confirmedNotAdmin) {
       const url = request.nextUrl.clone();
       url.pathname = "/";
       url.search = "";

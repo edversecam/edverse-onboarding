@@ -5,6 +5,7 @@ import { AccordionBlock } from "./AccordionBlock";
 import { FlipCardBlock } from "./FlipCardBlock";
 import { SlideBlock } from "./SlideBlock";
 import { VideoBlock } from "./VideoBlock";
+import { BlockBoundary } from "./BlockBoundary";
 import { Quiz } from "@/components/quiz/Quiz";
 
 function Heading({ children }: { children?: React.ReactNode }) {
@@ -15,6 +16,14 @@ function Heading({ children }: { children?: React.ReactNode }) {
 }
 
 export function BlockRenderer({ block }: { block: Block }) {
+  return (
+    <BlockBoundary label={block.kind.replace("-", " ")}>
+      {renderBlock(block)}
+    </BlockBoundary>
+  );
+}
+
+function renderBlock(block: Block) {
   switch (block.kind) {
     case "text":
       return (

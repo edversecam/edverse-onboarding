@@ -15,8 +15,10 @@ import {
   useCoursesLoaded,
 } from "@/lib/store";
 import { flattenLessons } from "@/lib/types";
+import { useAdminOnly } from "@/lib/auth";
 
 export default function AuthorDashboard() {
+  useAdminOnly();
   const courses = useCourses();
   const loaded = useCoursesLoaded();
   const router = useRouter();

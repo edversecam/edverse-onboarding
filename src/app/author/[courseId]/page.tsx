@@ -16,8 +16,10 @@ import {
   useCourse,
   useCoursesLoaded,
 } from "@/lib/store";
+import { useAdminOnly } from "@/lib/auth";
 
 export default function CourseEditor() {
+  useAdminOnly();
   const { courseId } = useParams<{ courseId: string }>();
   const course = useCourse(courseId);
   const loaded = useCoursesLoaded();
