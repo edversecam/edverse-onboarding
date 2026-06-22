@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import { Logo } from "@/components/brand/Logo";
 import { AccountMenu } from "@/components/AccountMenu";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -9,6 +10,7 @@ import {
   createCourse,
   deleteCourse,
   importStarterCourse,
+  revalidateCourses,
   useCourses,
   useCoursesLoaded,
 } from "@/lib/store";
@@ -18,6 +20,11 @@ export default function AuthorDashboard() {
   const courses = useCourses();
   const loaded = useCoursesLoaded();
   const router = useRouter();
+
+  // Refresh from the database on entry so just-created courses are listed.
+  useEffect(() => {
+    revalidateCourses();
+  }, []);
 
   const onCreate = () => {
     const c = createCourse();

@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect } from "react";
 import { Logo } from "@/components/brand/Logo";
 import { AccountMenu } from "@/components/AccountMenu";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { useCourses, useCoursesLoaded } from "@/lib/store";
+import { revalidateCourses, useCourses, useCoursesLoaded } from "@/lib/store";
 import { useRole, useUser } from "@/lib/auth";
 import { flattenLessons } from "@/lib/types";
 
@@ -14,6 +15,11 @@ export default function Home() {
   const user = useUser();
   const role = useRole();
   const isAdmin = role === "admin";
+
+  // Always refresh the list on entry so newly created courses appear.
+  useEffect(() => {
+    revalidateCourses();
+  }, []);
 
   return (
     <div className="min-h-dvh">

@@ -31,20 +31,47 @@ function subscribe(cb: () => void) {
   return () => listeners.delete(cb);
 }
 
+/** Ids of courses created locally but whose insert may not have landed yet —
+ *  kept across a refetch so a brand-new course never disappears. */
+const pendingIds = new Set<string>();
+
+async function fetchCourses(): Promise<Course[] | null> {
+  const { data, error } = await supabase
+    .from("courses")
+    .select("data")
+    .order("created_at", { ascending: true });
+  if (error || !data) return null;
+  return data.map((row) => row.data as Course);
+}
+
+function mergeIntoCache(dbCourses: Course[]) {
+  const dbIds = new Set(dbCourses.map((c) => c.id));
+  // Keep only freshly-created courses the fetch hasn't caught up to yet.
+  const localOnly = cache.filter((c) => !dbIds.has(c.id) && pendingIds.has(c.id));
+  cache = [...dbCourses, ...localOnly];
+  loaded = true;
+  emit();
+}
+
 async function ensureLoaded() {
   if (loaded || loadPromise) return loadPromise ?? undefined;
   loadPromise = (async () => {
-    const { data, error } = await supabase
-      .from("courses")
-      .select("data")
-      .order("created_at", { ascending: true });
-    if (!error && data) {
-      cache = data.map((row) => row.data as Course);
+    const db = await fetchCourses();
+    if (db) mergeIntoCache(db);
+    else {
+      loaded = true;
+      emit();
     }
-    loaded = true;
-    emit();
+    loadPromise = null;
   })();
   return loadPromise;
+}
+
+/** Re-fetch courses from Supabase and merge. Call when a course-list view
+ *  mounts so newly created/published courses appear without a manual refresh. */
+export async function revalidateCourses() {
+  const db = await fetchCourses();
+  if (db) mergeIntoCache(db);
 }
 
 /* ───────────────────────────── Persistence ───────────────────────────── */
@@ -58,6 +85,7 @@ function persist(course: Course, immediate = false) {
       .upsert({ id: course.id, title: course.title, data: course, published: true })
       .then(({ error }) => {
         if (error) console.error("Edverse: failed to save course", error);
+        else pendingIds.delete(course.id); // now safely in the database
       });
     timers.delete(course.id);
   };
@@ -123,6 +151,7 @@ export function createCourse(): Course {
       },
     ],
   };
+  pendingIds.add(course.id);
   setCache([...cache, course]);
   persist(course, true);
   return course;
@@ -132,6 +161,7 @@ export function createCourse(): Course {
 export function importStarterCourse(): Course {
   const course = structuredClone(sampleCourse);
   const exists = cache.some((c) => c.id === course.id);
+  pendingIds.add(course.id);
   setCache(exists ? cache.map((c) => (c.id === course.id ? course : c)) : [...cache, course]);
   persist(course, true);
   return course;
