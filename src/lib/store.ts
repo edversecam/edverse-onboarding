@@ -78,15 +78,27 @@ export async function revalidateCourses() {
 
 const timers = new Map<string, ReturnType<typeof setTimeout>>();
 
+/** Upsert a course, refreshing the session and retrying once if the first
+ *  attempt is rejected (e.g. the access token expired while editing). */
+async function upsertCourse(course: Course) {
+  const payload = { id: course.id, title: course.title, data: course, published: true };
+  let { error } = await supabase.from("courses").upsert(payload);
+  if (error) {
+    await supabase.auth.refreshSession().catch(() => {});
+    ({ error } = await supabase.from("courses").upsert(payload));
+  }
+  return error;
+}
+
 function persist(course: Course, immediate = false) {
   const run = () => {
-    supabase
-      .from("courses")
-      .upsert({ id: course.id, title: course.title, data: course, published: true })
-      .then(({ error }) => {
-        if (error) console.error("Edverse: failed to save course", error);
-        else pendingIds.delete(course.id); // now safely in the database
-      });
+    upsertCourse(course).then((error) => {
+      // Handled gracefully — keep it queued so a later save retries. Use warn
+      // (not error) so it doesn't surface as a dev error overlay.
+      if (error)
+        console.warn("Edverse: auto-save will retry —", error.message || error.code || error);
+      else pendingIds.delete(course.id);
+    });
     timers.delete(course.id);
   };
   const existing = timers.get(course.id);
@@ -176,7 +188,7 @@ export function deleteCourse(courseId: string) {
     .delete()
     .eq("id", courseId)
     .then(({ error }) => {
-      if (error) console.error("Edverse: failed to delete course", error);
+      if (error) console.warn("Edverse: delete failed —", error.message || error.code || error);
     });
 }
 
@@ -190,11 +202,9 @@ export async function saveCourse(courseId: string): Promise<boolean> {
     clearTimeout(t);
     timers.delete(courseId);
   }
-  const { error } = await supabase
-    .from("courses")
-    .upsert({ id: course.id, title: course.title, data: course, published: true });
+  const error = await upsertCourse(course);
   if (error) {
-    console.error("Edverse: save failed", error);
+    console.warn("Edverse: save failed —", error.message || error.code || error);
     return false;
   }
   pendingIds.delete(courseId);

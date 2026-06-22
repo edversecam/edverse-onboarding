@@ -52,7 +52,8 @@ export function useProgress(courseId: string) {
           updated_at: new Date().toISOString(),
         })
         .then(({ error }) => {
-          if (error) console.error("Edverse: failed to save progress", error);
+          if (error)
+            console.warn("Edverse: progress save skipped —", error.message || error.code || error);
         });
     },
     [user, courseId]
