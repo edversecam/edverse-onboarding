@@ -1,16 +1,19 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { Course, flattenLessons } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { BlockRenderer } from "@/components/blocks/BlockRenderer";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { useRole } from "@/lib/auth";
 import { useProgress } from "@/lib/progress";
 import { Sidebar } from "./Sidebar";
 
 export function CoursePlayer({ course }: { course: Course }) {
   const flat = useMemo(() => flattenLessons(course), [course]);
   const { ready, initial, persist } = useProgress(course.id);
+  const isAdmin = useRole() === "admin";
 
   const [index, setIndex] = useState(0);
   // Open by default on desktop, closed on mobile. CoursePlayer only mounts
@@ -99,6 +102,17 @@ export function CoursePlayer({ course }: { course: Course }) {
           <span className="ml-auto rounded-full bg-surface-2 px-3 py-1 text-xs font-semibold text-muted">
             {index + 1} / {flat.length}
           </span>
+          {isAdmin && (
+            <Link
+              href={`/author/${course.id}`}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-brand px-3 py-2 text-sm font-semibold text-white transition hover:bg-brand-600"
+            >
+              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              <span className="hidden sm:inline">Edit course</span>
+            </Link>
+          )}
           <ThemeToggle />
         </header>
 
