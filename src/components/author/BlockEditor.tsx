@@ -3,6 +3,7 @@
 import { Block } from "@/lib/types";
 import { uid } from "@/lib/store";
 import { QuizEditor } from "./QuizEditor";
+import { ImageUpload } from "./ImageUpload";
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -44,10 +45,13 @@ export function BlockEditor({
           <Row label="Body">
             <textarea value={block.body} onChange={(e) => onChange({ ...block, body: e.target.value })} rows={4} className="input" />
           </Row>
+          <Row label="Image">
+            <ImageUpload
+              value={block.imageUrl}
+              onChange={(url) => onChange({ ...block, imageUrl: url })}
+            />
+          </Row>
           <div className="grid gap-3 sm:grid-cols-2">
-            <Row label="Image URL">
-              <input value={block.imageUrl} onChange={(e) => onChange({ ...block, imageUrl: e.target.value })} className="input" />
-            </Row>
             <Row label="Image side">
               <select
                 value={block.imageSide ?? "right"}
@@ -58,10 +62,10 @@ export function BlockEditor({
                 <option value="left">Left</option>
               </select>
             </Row>
+            <Row label="Alt text">
+              <input value={block.imageAlt ?? ""} onChange={(e) => onChange({ ...block, imageAlt: e.target.value })} className="input" />
+            </Row>
           </div>
-          <Row label="Alt text">
-            <input value={block.imageAlt ?? ""} onChange={(e) => onChange({ ...block, imageAlt: e.target.value })} className="input" />
-          </Row>
         </div>
       );
 
