@@ -180,6 +180,27 @@ export function deleteCourse(courseId: string) {
     });
 }
 
+/** Force an immediate save of a course (flushes the debounced write). Returns
+ *  whether the save succeeded so the UI can confirm it. */
+export async function saveCourse(courseId: string): Promise<boolean> {
+  const course = cache.find((c) => c.id === courseId);
+  if (!course) return false;
+  const t = timers.get(courseId);
+  if (t) {
+    clearTimeout(t);
+    timers.delete(courseId);
+  }
+  const { error } = await supabase
+    .from("courses")
+    .upsert({ id: course.id, title: course.title, data: course, published: true });
+  if (error) {
+    console.error("Edverse: save failed", error);
+    return false;
+  }
+  pendingIds.delete(courseId);
+  return true;
+}
+
 export function patchCourse(courseId: string, patch: Partial<Course>) {
   update(courseId, (c) => ({ ...c, ...patch }));
 }

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { Logo } from "@/components/brand/Logo";
+import { SaveButton } from "@/components/author/SaveButton";
 import {
   addLesson,
   addModule,
@@ -42,12 +43,15 @@ export default function CourseEditor() {
             <Logo showWordmark={false} href="/author" />
             <span className="text-sm text-muted">Course editor</span>
           </div>
-          <Link
-            href={`/learn/${course.id}`}
-            className="rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-600"
-          >
-            Preview
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link
+              href={`/learn/${course.id}`}
+              className="rounded-lg border border-border px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-surface-2"
+            >
+              Preview
+            </Link>
+            <SaveButton courseId={course.id} />
+          </div>
         </div>
       </header>
 

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useState } from "react";
 import { Logo } from "@/components/brand/Logo";
+import { SaveButton } from "@/components/author/SaveButton";
 import { BlockEditor } from "@/components/author/BlockEditor";
 import { BlockRenderer } from "@/components/blocks/BlockRenderer";
 import { BLOCK_LABELS, newBlock } from "@/lib/factories";
@@ -66,12 +67,15 @@ export default function LessonEditor() {
               <p className="truncate text-sm font-semibold">{lesson.title}</p>
             </div>
           </div>
-          <Link
-            href={`/learn/${course.id}`}
-            className="shrink-0 rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-600"
-          >
-            Preview course
-          </Link>
+          <div className="flex shrink-0 items-center gap-2">
+            <Link
+              href={`/learn/${course.id}`}
+              className="rounded-lg border border-border px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-surface-2"
+            >
+              Preview course
+            </Link>
+            <SaveButton courseId={course.id} />
+          </div>
         </div>
       </header>
 
