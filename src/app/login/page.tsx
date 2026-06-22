@@ -177,7 +177,7 @@ function LoginInner() {
           <p className="mt-1.5 text-sm text-muted">
             {anySocial
               ? "Use your social or email account to continue to onboarding."
-              : "Sign in with your work email to continue to onboarding."}
+              : "Sign in with your email to continue to onboarding."}
           </p>
 
           {anySocial && (
