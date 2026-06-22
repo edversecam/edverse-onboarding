@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 import { RichText } from "./RichText";
 import { AccordionBlock } from "./AccordionBlock";
 import { FlipCardBlock } from "./FlipCardBlock";
+import { SlideBlock } from "./SlideBlock";
 import { VideoBlock } from "./VideoBlock";
 import { Quiz } from "@/components/quiz/Quiz";
 
@@ -74,6 +75,14 @@ export function BlockRenderer({ block }: { block: Block }) {
         <section>
           <Heading>{block.heading}</Heading>
           <FlipCardBlock block={block} />
+        </section>
+      );
+
+    case "slide":
+      return (
+        <section>
+          <Heading>{block.heading}</Heading>
+          <SlideBlock block={block} />
         </section>
       );
 

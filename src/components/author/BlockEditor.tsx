@@ -182,6 +182,84 @@ export function BlockEditor({
         </div>
       );
 
+    case "slide":
+      return (
+        <div className="space-y-3">
+          <Row label="Heading">
+            <input value={block.heading ?? ""} onChange={(e) => onChange({ ...block, heading: e.target.value })} className="input" />
+          </Row>
+          {block.slides.map((s, idx) => (
+            <div key={s.id} className="rounded-lg border border-border p-3">
+              <div className="mb-2 flex items-center gap-2">
+                <span className="rounded-md bg-brand-tint px-2 py-0.5 text-xs font-semibold text-brand-700">
+                  Slide {idx + 1}
+                </span>
+                <button
+                  type="button"
+                  aria-label="Move up"
+                  disabled={idx === 0}
+                  onClick={() => {
+                    const next = [...block.slides];
+                    [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
+                    onChange({ ...block, slides: next });
+                  }}
+                  className="ml-auto grid h-7 w-7 place-items-center rounded-md border border-border text-muted hover:bg-surface-2 disabled:opacity-30"
+                >
+                  ▲
+                </button>
+                <button
+                  type="button"
+                  aria-label="Move down"
+                  disabled={idx === block.slides.length - 1}
+                  onClick={() => {
+                    const next = [...block.slides];
+                    [next[idx + 1], next[idx]] = [next[idx], next[idx + 1]];
+                    onChange({ ...block, slides: next });
+                  }}
+                  className="grid h-7 w-7 place-items-center rounded-md border border-border text-muted hover:bg-surface-2 disabled:opacity-30"
+                >
+                  ▼
+                </button>
+                <button
+                  type="button"
+                  aria-label="Remove slide"
+                  onClick={() => onChange({ ...block, slides: block.slides.filter((x) => x.id !== s.id) })}
+                  className="grid h-7 w-7 place-items-center rounded-md border border-border text-danger hover:bg-danger-tint"
+                >
+                  ✕
+                </button>
+              </div>
+              <input
+                value={s.title ?? ""}
+                placeholder="Slide title"
+                onChange={(e) => onChange({ ...block, slides: block.slides.map((x) => (x.id === s.id ? { ...x, title: e.target.value } : x)) })}
+                className="input font-semibold"
+              />
+              <textarea
+                value={s.body}
+                placeholder="Slide content (supports **bold**, *italic*, - bullets)"
+                onChange={(e) => onChange({ ...block, slides: block.slides.map((x) => (x.id === s.id ? { ...x, body: e.target.value } : x)) })}
+                rows={3}
+                className="input mt-2"
+              />
+              <input
+                value={s.imageUrl ?? ""}
+                placeholder="Image URL (optional)"
+                onChange={(e) => onChange({ ...block, slides: block.slides.map((x) => (x.id === s.id ? { ...x, imageUrl: e.target.value } : x)) })}
+                className="input mt-2"
+              />
+            </div>
+          ))}
+          <button
+            type="button"
+            onClick={() => onChange({ ...block, slides: [...block.slides, { id: uid("s"), title: `Slide ${block.slides.length + 1}`, body: "" }] })}
+            className="rounded-lg border border-dashed border-border px-3 py-1.5 text-xs font-semibold text-muted hover:bg-surface-2"
+          >
+            + Add slide
+          </button>
+        </div>
+      );
+
     case "video":
       return (
         <div className="space-y-3">

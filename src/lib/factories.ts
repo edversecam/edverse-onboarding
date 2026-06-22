@@ -7,6 +7,7 @@ export const BLOCK_LABELS: Record<BlockKind, string> = {
   callout: "Callout",
   accordion: "Accordion",
   "flip-card": "Flip cards",
+  slide: "Slides",
   video: "Video",
   "knowledge-check": "Knowledge check",
 };
@@ -55,6 +56,16 @@ export function newBlock(kind: BlockKind): Block {
         cards: [
           { id: uid("f"), front: "Term", back: "Definition" },
           { id: uid("f"), front: "Term", back: "Definition" },
+        ],
+      };
+    case "slide":
+      return {
+        id: uid("b"),
+        kind,
+        heading: "Presentation",
+        slides: [
+          { id: uid("s"), title: "Slide one", body: "Your first slide's content." },
+          { id: uid("s"), title: "Slide two", body: "Your second slide's content." },
         ],
       };
     case "video":

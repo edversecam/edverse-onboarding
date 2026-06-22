@@ -120,6 +120,7 @@ export type BlockKind =
   | "text-image"
   | "accordion"
   | "flip-card"
+  | "slide"
   | "video"
   | "callout"
   | "knowledge-check";
@@ -170,6 +171,18 @@ export interface FlipCardBlock extends BlockBase {
   cards: FlipCard[];
 }
 
+export interface Slide {
+  id: ID;
+  title?: string;
+  body: string;
+  imageUrl?: string;
+}
+export interface SlideBlock extends BlockBase {
+  kind: "slide";
+  heading?: string;
+  slides: Slide[];
+}
+
 export type VideoSource = "youtube" | "url" | "embed";
 export interface VideoBlock extends BlockBase {
   kind: "video";
@@ -198,6 +211,7 @@ export type Block =
   | TextImageBlock
   | AccordionBlock
   | FlipCardBlock
+  | SlideBlock
   | VideoBlock
   | CalloutBlock
   | KnowledgeCheckBlock;
