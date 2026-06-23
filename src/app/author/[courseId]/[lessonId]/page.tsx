@@ -9,7 +9,7 @@ import { BlockEditor } from "@/components/author/BlockEditor";
 import { BlockRenderer } from "@/components/blocks/BlockRenderer";
 import { BLOCK_LABELS, newBlock } from "@/lib/factories";
 import { Block, BlockKind } from "@/lib/types";
-import { patchLesson, setLessonBlocks, useCourse, useCoursesLoaded } from "@/lib/store";
+import { patchLesson, setLessonBlocks, uid, useCourse, useCoursesLoaded } from "@/lib/store";
 import { useAdminOnly } from "@/lib/auth";
 
 export default function LessonEditor() {
@@ -54,6 +54,15 @@ export default function LessonEditor() {
     const b = newBlock(kind);
     setLessonBlocks(course.id, lesson.id, [...blocks, b]);
     setOpen(b.id);
+  };
+  const duplicateBlock = (i: number) => {
+    const clone = structuredClone(blocks[i]);
+    clone.id = uid("b"); // unique block id
+    if (clone.kind === "knowledge-check") clone.quiz = { ...clone.quiz, id: uid("q") };
+    const next = [...blocks];
+    next.splice(i + 1, 0, clone); // insert right after the original
+    setLessonBlocks(course.id, lesson.id, next);
+    setOpen(clone.id);
   };
 
   return (
@@ -169,6 +178,13 @@ export default function LessonEditor() {
                     className="shrink-0 text-sm font-medium text-muted hover:text-brand-700"
                   >
                     {open === b.id ? "Collapse" : "Edit"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => duplicateBlock(i)}
+                    className="shrink-0 text-sm font-medium text-muted hover:text-brand-700"
+                  >
+                    Duplicate
                   </button>
                   <IconBtn label="Up" onClick={() => moveBlock(i, -1)} disabled={i === 0}>▲</IconBtn>
                   <IconBtn label="Down" onClick={() => moveBlock(i, 1)} disabled={i === blocks.length - 1}>▼</IconBtn>
