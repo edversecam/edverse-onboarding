@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import {
   DragDropQuiz,
   FillGapQuiz,
@@ -396,26 +397,17 @@ function FillGapEditor({
                 }
                 className="input"
               />
-              <input
-                value={(b.options ?? []).join(", ")}
+              <CommaListInput
+                value={b.options ?? []}
                 placeholder="Wrong words, comma separated"
-                onChange={(e) =>
+                onChange={(options) =>
                   onChange({
                     ...quiz,
                     blanks: quiz.blanks.map((x) =>
-                      x.id === b.id
-                        ? {
-                            ...x,
-                            options: e.target.value
-                              .split(",")
-                              .map((s) => s.trim())
-                              .filter(Boolean),
-                          }
-                        : x
+                      x.id === b.id ? { ...x, options } : x
                     ),
                   })
                 }
-                className="input"
               />
               <RemoveBtn
                 onClick={() =>
@@ -471,5 +463,43 @@ function RemoveBtn({ onClick }: { onClick: () => void }) {
     >
       ✕
     </button>
+  );
+}
+
+const parseList = (s: string) =>
+  s.split(",").map((x) => x.trim()).filter(Boolean);
+
+/** Comma-separated text input that keeps what you type (commas and all) and
+ *  reports the cleaned list, so typing a comma to add a second word works. */
+function CommaListInput({
+  value,
+  placeholder,
+  onChange,
+}: {
+  value: string[];
+  placeholder?: string;
+  onChange: (list: string[]) => void;
+}) {
+  const [text, setText] = useState(() => value.join(", "));
+
+  // Re-sync only when the value changes for a reason other than our own typing
+  // (e.g. switching blanks), so an in-progress comma isn't wiped out.
+  useEffect(() => {
+    if (parseList(text).join("|") !== value.join("|")) {
+      setText(value.join(", "));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value]);
+
+  return (
+    <input
+      value={text}
+      placeholder={placeholder}
+      onChange={(e) => {
+        setText(e.target.value);
+        onChange(parseList(e.target.value));
+      }}
+      className="input"
+    />
   );
 }
