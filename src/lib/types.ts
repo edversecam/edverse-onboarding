@@ -203,7 +203,17 @@ export interface CalloutBlock extends BlockBase {
 export interface KnowledgeCheckBlock extends BlockBase {
   kind: "knowledge-check";
   heading?: string;
-  quiz: Quiz;
+  /** One or more quizzes (any types) shown together in this check. */
+  quizzes?: Quiz[];
+  /** @deprecated older single-quiz shape — normalised to `quizzes` on read. */
+  quiz?: Quiz;
+}
+
+/** Quizzes in a knowledge-check block, handling both old (`quiz`) and new (`quizzes`) data. */
+export function blockQuizzes(block: KnowledgeCheckBlock): Quiz[] {
+  if (block.quizzes && block.quizzes.length) return block.quizzes;
+  if (block.quiz) return [block.quiz];
+  return [];
 }
 
 export type Block =

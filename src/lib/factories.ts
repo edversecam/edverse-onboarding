@@ -78,7 +78,7 @@ export function newBlock(kind: BlockKind): Block {
         caption: "",
       };
     case "knowledge-check":
-      return { id: uid("b"), kind, heading: "Knowledge check", quiz: newQuiz("multiple-choice") };
+      return { id: uid("b"), kind, heading: "Knowledge check", quizzes: [newQuiz("multiple-choice")] };
   }
 }
 

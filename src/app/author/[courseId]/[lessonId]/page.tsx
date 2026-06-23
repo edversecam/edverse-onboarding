@@ -8,7 +8,7 @@ import { SaveButton } from "@/components/author/SaveButton";
 import { BlockEditor } from "@/components/author/BlockEditor";
 import { BlockRenderer } from "@/components/blocks/BlockRenderer";
 import { BLOCK_LABELS, newBlock } from "@/lib/factories";
-import { Block, BlockKind } from "@/lib/types";
+import { Block, BlockKind, blockQuizzes } from "@/lib/types";
 import { patchLesson, setLessonBlocks, uid, useCourse, useCoursesLoaded } from "@/lib/store";
 import { useAdminOnly } from "@/lib/auth";
 
@@ -58,7 +58,10 @@ export default function LessonEditor() {
   const duplicateBlock = (i: number) => {
     const clone = structuredClone(blocks[i]);
     clone.id = uid("b"); // unique block id
-    if (clone.kind === "knowledge-check") clone.quiz = { ...clone.quiz, id: uid("q") };
+    if (clone.kind === "knowledge-check") {
+      clone.quizzes = blockQuizzes(clone).map((q) => ({ ...q, id: uid("q") }));
+      clone.quiz = undefined;
+    }
     const next = [...blocks];
     next.splice(i + 1, 0, clone); // insert right after the original
     setLessonBlocks(course.id, lesson.id, next);

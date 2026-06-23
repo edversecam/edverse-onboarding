@@ -1,4 +1,4 @@
-import { Block } from "@/lib/types";
+import { Block, blockQuizzes } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { RichText } from "./RichText";
 import { AccordionBlock } from "./AccordionBlock";
@@ -107,7 +107,11 @@ function renderBlock(block: Block) {
       return (
         <section>
           <Heading>{block.heading}</Heading>
-          <Quiz quiz={block.quiz} />
+          <div className="space-y-6">
+            {blockQuizzes(block).map((q) => (
+              <Quiz key={q.id} quiz={q} />
+            ))}
+          </div>
         </section>
       );
 
