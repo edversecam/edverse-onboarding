@@ -243,6 +243,12 @@ export function moveModule(courseId: string, moduleId: string, dir: -1 | 1) {
   update(courseId, (c) => ({ ...c, modules: move(c.modules, moduleId, dir) }));
 }
 
+/** Drag-reorder: move a module to the position of another module. */
+export function reorderModule(courseId: string, draggedId: string, targetId: string) {
+  if (draggedId === targetId) return;
+  update(courseId, (c) => ({ ...c, modules: reorder(c.modules, draggedId, targetId) }));
+}
+
 export function addLesson(courseId: string, moduleId: string): Lesson {
   const lesson: Lesson = { id: uid("l"), title: "New lesson", blocks: [] };
   update(courseId, (c) => ({
@@ -283,6 +289,22 @@ export function moveLesson(courseId: string, moduleId: string, lessonId: string,
   }));
 }
 
+/** Drag-reorder: move a lesson to the position of another lesson in the same module. */
+export function reorderLesson(
+  courseId: string,
+  moduleId: string,
+  draggedId: string,
+  targetId: string
+) {
+  if (draggedId === targetId) return;
+  update(courseId, (c) => ({
+    ...c,
+    modules: c.modules.map((m) =>
+      m.id === moduleId ? { ...m, lessons: reorder(m.lessons, draggedId, targetId) } : m
+    ),
+  }));
+}
+
 export function setLessonBlocks(courseId: string, lessonId: string, blocks: Block[]) {
   patchLesson(courseId, lessonId, { blocks });
 }
@@ -295,5 +317,16 @@ function move<T extends { id: string }>(arr: T[], id: string, dir: -1 | 1): T[] 
   if (i < 0 || j < 0 || j >= arr.length) return arr;
   const next = [...arr];
   [next[i], next[j]] = [next[j], next[i]];
+  return next;
+}
+
+/** Move the item with `draggedId` to the position currently held by `targetId`. */
+function reorder<T extends { id: string }>(arr: T[], draggedId: string, targetId: string): T[] {
+  const from = arr.findIndex((x) => x.id === draggedId);
+  const to = arr.findIndex((x) => x.id === targetId);
+  if (from < 0 || to < 0) return arr;
+  const next = [...arr];
+  const [moved] = next.splice(from, 1);
+  next.splice(to, 0, moved);
   return next;
 }

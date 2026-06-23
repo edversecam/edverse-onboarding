@@ -2,17 +2,19 @@
 
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
+import { useState } from "react";
 import { Logo } from "@/components/brand/Logo";
 import { SaveButton } from "@/components/author/SaveButton";
+import { cn } from "@/lib/utils";
 import {
   addLesson,
   addModule,
   deleteLesson,
   deleteModule,
-  moveLesson,
-  moveModule,
   patchCourse,
   patchModule,
+  reorderLesson,
+  reorderModule,
   useCourse,
   useCoursesLoaded,
 } from "@/lib/store";
@@ -24,6 +26,10 @@ export default function CourseEditor() {
   const course = useCourse(courseId);
   const loaded = useCoursesLoaded();
   const router = useRouter();
+
+  const [dragModule, setDragModule] = useState<string | null>(null);
+  const [dragLesson, setDragLesson] = useState<{ moduleId: string; lessonId: string } | null>(null);
+  const [overId, setOverId] = useState<string | null>(null);
 
   if (!loaded)
     return <div className="grid min-h-dvh place-items-center text-muted">Loading…</div>;
@@ -112,12 +118,43 @@ export default function CourseEditor() {
           </div>
 
           <div className="space-y-4">
-            {course.modules.map((m, mi) => (
+            {course.modules.map((m) => (
               <div
                 key={m.id}
-                className="rounded-xl border border-border bg-surface p-4 shadow-[var(--shadow-card)]"
+                data-card-id={m.id}
+                onDragOver={(e) => {
+                  if (dragModule && dragModule !== m.id) {
+                    e.preventDefault();
+                    setOverId(m.id);
+                  }
+                }}
+                onDragLeave={() => setOverId((o) => (o === m.id ? null : o))}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  if (dragModule && dragModule !== m.id)
+                    reorderModule(course.id, dragModule, m.id);
+                  setOverId(null);
+                }}
+                className={cn(
+                  "rounded-xl border bg-surface p-4 shadow-[var(--shadow-card)] transition",
+                  dragModule === m.id && "opacity-50",
+                  overId === m.id && dragModule ? "border-brand" : "border-border"
+                )}
               >
                 <div className="flex items-center gap-2">
+                  <DragHandle
+                    label="Drag to reorder module"
+                    onDragStart={(e) => {
+                      setDragModule(m.id);
+                      const card = e.currentTarget.closest("[data-card-id]");
+                      if (card) e.dataTransfer.setDragImage(card, 16, 16);
+                      e.dataTransfer.effectAllowed = "move";
+                    }}
+                    onDragEnd={() => {
+                      setDragModule(null);
+                      setOverId(null);
+                    }}
+                  />
                   <input
                     value={m.title}
                     onChange={(e) =>
@@ -125,16 +162,6 @@ export default function CourseEditor() {
                     }
                     className="input flex-1 font-semibold"
                   />
-                  <IconBtn label="Move up" onClick={() => moveModule(course.id, m.id, -1)} disabled={mi === 0}>
-                    ▲
-                  </IconBtn>
-                  <IconBtn
-                    label="Move down"
-                    onClick={() => moveModule(course.id, m.id, 1)}
-                    disabled={mi === course.modules.length - 1}
-                  >
-                    ▼
-                  </IconBtn>
                   <IconBtn
                     label="Delete module"
                     danger
@@ -151,8 +178,48 @@ export default function CourseEditor() {
                   {m.lessons.map((l, li) => (
                     <li
                       key={l.id}
-                      className="flex items-center gap-2 rounded-lg border border-border px-3 py-2"
+                      data-card-id={l.id}
+                      onDragOver={(e) => {
+                        if (
+                          dragLesson &&
+                          dragLesson.moduleId === m.id &&
+                          dragLesson.lessonId !== l.id
+                        ) {
+                          e.preventDefault();
+                          setOverId(l.id);
+                        }
+                      }}
+                      onDragLeave={() => setOverId((o) => (o === l.id ? null : o))}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        if (
+                          dragLesson &&
+                          dragLesson.moduleId === m.id &&
+                          dragLesson.lessonId !== l.id
+                        )
+                          reorderLesson(course.id, m.id, dragLesson.lessonId, l.id);
+                        setOverId(null);
+                      }}
+                      className={cn(
+                        "flex items-center gap-2 rounded-lg border px-3 py-2 transition",
+                        dragLesson?.lessonId === l.id && "opacity-50",
+                        overId === l.id && dragLesson ? "border-brand" : "border-border"
+                      )}
                     >
+                      <DragHandle
+                        label="Drag to reorder lesson"
+                        small
+                        onDragStart={(e) => {
+                          setDragLesson({ moduleId: m.id, lessonId: l.id });
+                          const row = e.currentTarget.closest("[data-card-id]");
+                          if (row) e.dataTransfer.setDragImage(row, 16, 16);
+                          e.dataTransfer.effectAllowed = "move";
+                        }}
+                        onDragEnd={() => {
+                          setDragLesson(null);
+                          setOverId(null);
+                        }}
+                      />
                       <span className="grid h-6 w-6 place-items-center rounded-md bg-brand-tint text-xs font-bold text-brand-700">
                         {li + 1}
                       </span>
@@ -168,16 +235,6 @@ export default function CourseEditor() {
                           {l.blocks.length} blocks
                         </span>
                       </button>
-                      <IconBtn label="Move up" onClick={() => moveLesson(course.id, m.id, l.id, -1)} disabled={li === 0}>
-                        ▲
-                      </IconBtn>
-                      <IconBtn
-                        label="Move down"
-                        onClick={() => moveLesson(course.id, m.id, l.id, 1)}
-                        disabled={li === m.lessons.length - 1}
-                      >
-                        ▼
-                      </IconBtn>
                       <IconBtn
                         label="Edit lesson"
                         onClick={() => router.push(`/author/${course.id}/${l.id}`)}
@@ -211,6 +268,41 @@ export default function CourseEditor() {
         </section>
       </main>
     </div>
+  );
+}
+
+function DragHandle({
+  label,
+  small,
+  onDragStart,
+  onDragEnd,
+}: {
+  label: string;
+  small?: boolean;
+  onDragStart: (e: React.DragEvent<HTMLSpanElement>) => void;
+  onDragEnd: () => void;
+}) {
+  return (
+    <span
+      draggable
+      aria-label={label}
+      title="Drag to reorder"
+      onDragStart={onDragStart}
+      onDragEnd={onDragEnd}
+      className={cn(
+        "grid shrink-0 cursor-grab place-items-center rounded-md text-muted transition hover:bg-surface-2 hover:text-foreground active:cursor-grabbing",
+        small ? "h-7 w-6" : "h-8 w-7"
+      )}
+    >
+      <svg viewBox="0 0 16 16" className="h-4 w-4" fill="currentColor" aria-hidden>
+        <circle cx="5" cy="4" r="1.3" />
+        <circle cx="11" cy="4" r="1.3" />
+        <circle cx="5" cy="8" r="1.3" />
+        <circle cx="11" cy="8" r="1.3" />
+        <circle cx="5" cy="12" r="1.3" />
+        <circle cx="11" cy="12" r="1.3" />
+      </svg>
+    </span>
   );
 }
 
