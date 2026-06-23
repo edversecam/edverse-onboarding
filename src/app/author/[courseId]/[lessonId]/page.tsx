@@ -2,11 +2,13 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Logo } from "@/components/brand/Logo";
 import { SaveButton } from "@/components/author/SaveButton";
 import { BlockEditor } from "@/components/author/BlockEditor";
 import { BlockRenderer } from "@/components/blocks/BlockRenderer";
+import { DragHandle, useSortable } from "@/components/author/Sortable";
+import { cn } from "@/lib/utils";
 import { BLOCK_LABELS, newBlock } from "@/lib/factories";
 import { Block, BlockKind, blockQuizzes } from "@/lib/types";
 import { patchLesson, setLessonBlocks, uid, useCourse, useCoursesLoaded } from "@/lib/store";
@@ -18,6 +20,20 @@ export default function LessonEditor() {
   const course = useCourse(courseId);
   const loaded = useCoursesLoaded();
   const [open, setOpen] = useState<string | null>(null);
+
+  // Drag-reorder blocks (hook must run before the early returns; reads the
+  // latest blocks via a ref).
+  const blocksRef = useRef<Block[]>([]);
+  const blockSort = useSortable((draggedId, targetId) => {
+    const arr = blocksRef.current;
+    const from = arr.findIndex((b) => b.id === draggedId);
+    const to = arr.findIndex((b) => b.id === targetId);
+    if (from < 0 || to < 0) return;
+    const next = [...arr];
+    const [moved] = next.splice(from, 1);
+    next.splice(to, 0, moved);
+    setLessonBlocks(courseId, lessonId, next);
+  });
 
   if (!loaded)
     return <div className="grid min-h-dvh place-items-center text-muted">Loading…</div>;
@@ -38,18 +54,12 @@ export default function LessonEditor() {
 
   const { l: lesson, m: mod } = found;
   const blocks = lesson.blocks;
+  blocksRef.current = blocks;
 
   const updateBlock = (id: string, b: Block) =>
     setLessonBlocks(course.id, lesson.id, blocks.map((x) => (x.id === id ? b : x)));
   const removeBlock = (id: string) =>
     setLessonBlocks(course.id, lesson.id, blocks.filter((x) => x.id !== id));
-  const moveBlock = (i: number, dir: -1 | 1) => {
-    const j = i + dir;
-    if (j < 0 || j >= blocks.length) return;
-    const next = [...blocks];
-    [next[i], next[j]] = [next[j], next[i]];
-    setLessonBlocks(course.id, lesson.id, next);
-  };
   const addBlock = (kind: BlockKind) => {
     const b = newBlock(kind);
     setLessonBlocks(course.id, lesson.id, [...blocks, b]);
@@ -163,8 +173,17 @@ export default function LessonEditor() {
               </div>
             )}
             {blocks.map((b, i) => (
-              <div key={b.id} className="rounded-xl border border-border bg-surface shadow-[var(--shadow-card)]">
+              <div
+                key={b.id}
+                {...blockSort.dropProps(b.id)}
+                className={cn(
+                  "rounded-xl border bg-surface shadow-[var(--shadow-card)] transition",
+                  blockSort.isDragging(b.id) && "opacity-50",
+                  blockSort.isOver(b.id) ? "border-brand" : "border-border"
+                )}
+              >
                 <div className="flex items-center gap-2 border-b border-border px-4 py-2.5">
+                  <DragHandle label="Drag to reorder block" small {...blockSort.handleProps(b.id)} />
                   <span className="shrink-0 rounded-md bg-brand-tint px-2 py-0.5 text-xs font-semibold text-brand-700">
                     {BLOCK_LABELS[b.kind]}
                   </span>
@@ -189,8 +208,6 @@ export default function LessonEditor() {
                   >
                     Duplicate
                   </button>
-                  <IconBtn label="Up" onClick={() => moveBlock(i, -1)} disabled={i === 0}>▲</IconBtn>
-                  <IconBtn label="Down" onClick={() => moveBlock(i, 1)} disabled={i === blocks.length - 1}>▼</IconBtn>
                   <IconBtn label="Delete" danger onClick={() => removeBlock(b.id)}>✕</IconBtn>
                 </div>
                 {open === b.id && (

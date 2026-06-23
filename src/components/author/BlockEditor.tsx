@@ -1,10 +1,13 @@
 "use client";
 
-import { Block, blockQuizzes } from "@/lib/types";
+import { useRef } from "react";
+import { Block, KnowledgeCheckBlock, Quiz, blockQuizzes } from "@/lib/types";
 import { uid } from "@/lib/store";
 import { newQuiz } from "@/lib/factories";
+import { cn } from "@/lib/utils";
 import { QuizEditor } from "./QuizEditor";
 import { ImageUpload } from "./ImageUpload";
+import { DragHandle, useSortable } from "./Sortable";
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -299,46 +302,77 @@ export function BlockEditor({
         </div>
       );
 
-    case "knowledge-check": {
-      const quizzes = blockQuizzes(block);
-      const setQuizzes = (qs: typeof quizzes) =>
-        onChange({ ...block, quizzes: qs, quiz: undefined });
-      return (
-        <div className="space-y-3">
-          <Row label="Heading">
-            <input value={block.heading ?? ""} onChange={(e) => onChange({ ...block, heading: e.target.value })} className="input" />
-          </Row>
-          {quizzes.map((q, i) => (
-            <div key={q.id} className="rounded-lg border border-border bg-surface-2/40 p-3">
-              <div className="mb-2 flex items-center gap-2">
-                <span className="rounded-md bg-brand-tint px-2 py-0.5 text-xs font-semibold text-brand-700">
-                  Quiz {i + 1}
-                </span>
-                <button
-                  type="button"
-                  aria-label="Remove quiz"
-                  disabled={quizzes.length <= 1}
-                  onClick={() => setQuizzes(quizzes.filter((x) => x.id !== q.id))}
-                  className="ml-auto grid h-7 w-7 place-items-center rounded-md border border-border text-danger transition hover:bg-danger-tint disabled:opacity-30"
-                >
-                  ✕
-                </button>
-              </div>
-              <QuizEditor
-                quiz={q}
-                onChange={(nq) => setQuizzes(quizzes.map((x) => (x.id === q.id ? nq : x)))}
-              />
-            </div>
-          ))}
-          <button
-            type="button"
-            onClick={() => setQuizzes([...quizzes, newQuiz("multiple-choice")])}
-            className="rounded-lg border border-dashed border-border px-3 py-1.5 text-sm font-semibold text-muted transition hover:bg-surface-2"
-          >
-            + Add quiz
-          </button>
-        </div>
-      );
-    }
+    case "knowledge-check":
+      return <KnowledgeCheckEditor block={block} onChange={onChange} />;
   }
+}
+
+function KnowledgeCheckEditor({
+  block,
+  onChange,
+}: {
+  block: KnowledgeCheckBlock;
+  onChange: (b: Block) => void;
+}) {
+  const quizzes = blockQuizzes(block);
+  const quizzesRef = useRef<Quiz[]>(quizzes);
+  quizzesRef.current = quizzes;
+  const setQuizzes = (qs: Quiz[]) => onChange({ ...block, quizzes: qs, quiz: undefined });
+
+  const sort = useSortable((draggedId, targetId) => {
+    const arr = quizzesRef.current;
+    const from = arr.findIndex((q) => q.id === draggedId);
+    const to = arr.findIndex((q) => q.id === targetId);
+    if (from < 0 || to < 0) return;
+    const next = [...arr];
+    const [moved] = next.splice(from, 1);
+    next.splice(to, 0, moved);
+    setQuizzes(next);
+  });
+
+  return (
+    <div className="space-y-3">
+      <Row label="Heading">
+        <input value={block.heading ?? ""} onChange={(e) => onChange({ ...block, heading: e.target.value })} className="input" />
+      </Row>
+      {quizzes.map((q, i) => (
+        <div
+          key={q.id}
+          {...sort.dropProps(q.id)}
+          className={cn(
+            "rounded-lg border bg-surface-2/40 p-3 transition",
+            sort.isDragging(q.id) && "opacity-50",
+            sort.isOver(q.id) ? "border-brand" : "border-border"
+          )}
+        >
+          <div className="mb-2 flex items-center gap-2">
+            <DragHandle label="Drag to reorder quiz" small {...sort.handleProps(q.id)} />
+            <span className="rounded-md bg-brand-tint px-2 py-0.5 text-xs font-semibold text-brand-700">
+              Quiz {i + 1}
+            </span>
+            <button
+              type="button"
+              aria-label="Remove quiz"
+              disabled={quizzes.length <= 1}
+              onClick={() => setQuizzes(quizzes.filter((x) => x.id !== q.id))}
+              className="ml-auto grid h-7 w-7 place-items-center rounded-md border border-border text-danger transition hover:bg-danger-tint disabled:opacity-30"
+            >
+              ✕
+            </button>
+          </div>
+          <QuizEditor
+            quiz={q}
+            onChange={(nq) => setQuizzes(quizzesRef.current.map((x) => (x.id === q.id ? nq : x)))}
+          />
+        </div>
+      ))}
+      <button
+        type="button"
+        onClick={() => setQuizzes([...quizzes, newQuiz("multiple-choice")])}
+        className="rounded-lg border border-dashed border-border px-3 py-1.5 text-sm font-semibold text-muted transition hover:bg-surface-2"
+      >
+        + Add quiz
+      </button>
+    </div>
+  );
 }
