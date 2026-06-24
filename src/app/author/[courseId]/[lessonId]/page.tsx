@@ -194,21 +194,18 @@ export default function LessonEditor() {
                     aria-label="Block name"
                     className="min-w-0 flex-1 rounded-md bg-transparent px-1.5 py-1 text-sm font-medium text-foreground outline-none transition placeholder:font-normal placeholder:text-muted hover:bg-surface-2 focus:bg-surface-2"
                   />
-                  <button
-                    type="button"
+                  <IconBtn
+                    label={open === b.id ? "Collapse" : "Edit"}
                     onClick={() => setOpen(open === b.id ? null : b.id)}
-                    className="shrink-0 text-sm font-medium text-muted hover:text-brand-700"
                   >
-                    {open === b.id ? "Collapse" : "Edit"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => duplicateBlock(i)}
-                    className="shrink-0 text-sm font-medium text-muted hover:text-brand-700"
-                  >
-                    Duplicate
-                  </button>
-                  <IconBtn label="Delete" danger onClick={() => removeBlock(b.id)}>✕</IconBtn>
+                    {open === b.id ? <ChevronUpIcon /> : <PencilIcon />}
+                  </IconBtn>
+                  <IconBtn label="Duplicate" onClick={() => duplicateBlock(i)}>
+                    <CopyIcon />
+                  </IconBtn>
+                  <IconBtn label="Delete" danger onClick={() => removeBlock(b.id)}>
+                    <TrashIcon />
+                  </IconBtn>
                 </div>
                 {open === b.id && (
                   <div className="p-4">
@@ -278,5 +275,40 @@ function IconBtn({
     >
       {children}
     </button>
+  );
+}
+
+const iconCls = "h-4 w-4";
+function PencilIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className={iconCls} fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+function ChevronUpIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className={iconCls} fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M6 15l6-6 6 6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+function CopyIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className={iconCls} fill="none" stroke="currentColor" strokeWidth="2">
+      <rect x="9" y="9" width="11" height="11" rx="2" />
+      <path d="M5 15V5a2 2 0 0 1 2-2h10" strokeLinecap="round" />
+    </svg>
+  );
+}
+function TrashIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className={iconCls} fill="none" stroke="currentColor" strokeWidth="2">
+      <path
+        d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6M10 11v6M14 11v6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
   );
 }
