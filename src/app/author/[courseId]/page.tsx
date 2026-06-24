@@ -12,6 +12,7 @@ import {
   addModule,
   deleteLesson,
   deleteModule,
+  duplicateLesson,
   patchCourse,
   patchModule,
   reorderLesson,
@@ -168,7 +169,7 @@ export default function CourseEditor() {
                       deleteModule(course.id, m.id)
                     }
                   >
-                    ✕
+                    <TrashIcon />
                   </IconBtn>
                 </div>
 
@@ -237,7 +238,13 @@ export default function CourseEditor() {
                         label="Edit lesson"
                         onClick={() => router.push(`/author/${course.id}/${l.id}`)}
                       >
-                        ✎
+                        <PencilIcon />
+                      </IconBtn>
+                      <IconBtn
+                        label="Duplicate lesson"
+                        onClick={() => duplicateLesson(course.id, m.id, l.id)}
+                      >
+                        <CopyIcon />
                       </IconBtn>
                       <IconBtn
                         label="Delete lesson"
@@ -247,7 +254,7 @@ export default function CourseEditor() {
                           deleteLesson(course.id, l.id)
                         }
                       >
-                        ✕
+                        <TrashIcon />
                       </IconBtn>
                     </li>
                   ))}
@@ -312,6 +319,34 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       </span>
       {children}
     </label>
+  );
+}
+
+const iconCls = "h-4 w-4";
+function PencilIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className={iconCls} fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+function CopyIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className={iconCls} fill="none" stroke="currentColor" strokeWidth="2">
+      <rect x="9" y="9" width="11" height="11" rx="2" />
+      <path d="M5 15V5a2 2 0 0 1 2-2h10" strokeLinecap="round" />
+    </svg>
+  );
+}
+function TrashIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className={iconCls} fill="none" stroke="currentColor" strokeWidth="2">
+      <path
+        d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6M10 11v6M14 11v6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
   );
 }
 

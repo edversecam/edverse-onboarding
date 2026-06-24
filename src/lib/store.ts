@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useSyncExternalStore } from "react";
-import { Block, Course, Lesson, Module } from "./types";
+import { Block, Course, Lesson, Module, blockQuizzes } from "./types";
 import { createClient } from "./supabase/client";
 import { sampleCourse } from "@/data/sample-course";
 
@@ -278,6 +278,35 @@ export function deleteLesson(courseId: string, lessonId: string) {
       lessons: m.lessons.filter((l) => l.id !== lessonId),
     })),
   }));
+}
+
+/** Clone a lesson (fresh ids for the lesson, its blocks and quizzes) and insert
+ *  the copy right after the original within the same module. */
+export function duplicateLesson(courseId: string, moduleId: string, lessonId: string): Lesson | undefined {
+  let created: Lesson | undefined;
+  update(courseId, (c) => ({
+    ...c,
+    modules: c.modules.map((m) => {
+      if (m.id !== moduleId) return m;
+      const idx = m.lessons.findIndex((l) => l.id === lessonId);
+      if (idx < 0) return m;
+      const clone = structuredClone(m.lessons[idx]);
+      clone.id = uid("l");
+      clone.blocks = clone.blocks.map((b) => {
+        b.id = uid("b");
+        if (b.kind === "knowledge-check") {
+          b.quizzes = blockQuizzes(b).map((q) => ({ ...q, id: uid("q") }));
+          b.quiz = undefined;
+        }
+        return b;
+      });
+      created = clone;
+      const lessons = [...m.lessons];
+      lessons.splice(idx + 1, 0, clone);
+      return { ...m, lessons };
+    }),
+  }));
+  return created;
 }
 
 export function moveLesson(courseId: string, moduleId: string, lessonId: string, dir: -1 | 1) {
