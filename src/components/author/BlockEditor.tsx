@@ -9,7 +9,7 @@ import { QuizEditor } from "./QuizEditor";
 import { ImageUpload } from "./ImageUpload";
 import { RichTextEditor } from "./RichTextEditor";
 import { DragHandle, useSortable } from "./Sortable";
-import { TrashIcon } from "./Icons";
+import { CopyIcon, TrashIcon } from "./Icons";
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -229,6 +229,21 @@ export function BlockEditor({
                   className="grid h-7 w-7 place-items-center rounded-md border border-border text-muted hover:bg-surface-2 disabled:opacity-30"
                 >
                   ▼
+                </button>
+                <button
+                  type="button"
+                  aria-label="Duplicate slide"
+                  title="Duplicate slide"
+                  onClick={() => {
+                    const clone = structuredClone(s);
+                    clone.id = uid("s");
+                    const next = [...block.slides];
+                    next.splice(idx + 1, 0, clone);
+                    onChange({ ...block, slides: next });
+                  }}
+                  className="grid h-7 w-7 place-items-center rounded-md border border-border text-muted hover:bg-surface-2"
+                >
+                  <CopyIcon />
                 </button>
                 <button
                   type="button"
