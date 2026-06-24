@@ -253,7 +253,7 @@ export function BlockEditor({
               </div>
               <input
                 value={s.imageUrl ?? ""}
-                placeholder="Image URL (optional)"
+                placeholder="Slide URL (optional) — image shown on this slide"
                 onChange={(e) => onChange({ ...block, slides: block.slides.map((x) => (x.id === s.id ? { ...x, imageUrl: e.target.value } : x)) })}
                 className="input mt-2"
               />

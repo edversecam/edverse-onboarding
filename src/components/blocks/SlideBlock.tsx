@@ -19,12 +19,19 @@ export function SlideBlock({ block }: { block: SlideBlockT }) {
       {/* Slide body */}
       <div className="min-h-[16rem] p-6 sm:p-8">
         {slide.imageUrl && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={slide.imageUrl}
-            alt={slide.title ?? ""}
-            className="mb-5 max-h-72 w-full rounded-xl border border-border object-cover"
-          />
+          <button
+            type="button"
+            onClick={() => setI((n) => (n + 1) % total)}
+            title="Click for the next slide"
+            className="group mb-5 block w-full cursor-pointer"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={slide.imageUrl}
+              alt={slide.title ?? ""}
+              className="max-h-72 w-full rounded-xl border border-border object-cover transition group-hover:brightness-95"
+            />
+          </button>
         )}
         {slide.title && (
           <h4 className="mb-2 font-display text-2xl font-semibold text-foreground">
