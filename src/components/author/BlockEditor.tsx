@@ -9,6 +9,7 @@ import { QuizEditor } from "./QuizEditor";
 import { ImageUpload } from "./ImageUpload";
 import { RichTextEditor } from "./RichTextEditor";
 import { DragHandle, useSortable } from "./Sortable";
+import { TrashIcon } from "./Icons";
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -122,7 +123,7 @@ export function BlockEditor({
                   onClick={() => onChange({ ...block, items: block.items.filter((x) => x.id !== it.id) })}
                   className="grid h-8 w-8 shrink-0 place-items-center rounded-md border border-border text-danger hover:bg-danger-tint"
                 >
-                  ✕
+                  <TrashIcon />
                 </button>
               </div>
               <div className="mt-2">
@@ -177,7 +178,7 @@ export function BlockEditor({
                 onClick={() => onChange({ ...block, cards: block.cards.filter((x) => x.id !== c.id) })}
                 className="grid h-8 w-8 shrink-0 place-items-center rounded-md border border-border text-danger hover:bg-danger-tint"
               >
-                ✕
+                <TrashIcon />
               </button>
             </div>
           ))}
@@ -235,7 +236,7 @@ export function BlockEditor({
                   onClick={() => onChange({ ...block, slides: block.slides.filter((x) => x.id !== s.id) })}
                   className="grid h-7 w-7 place-items-center rounded-md border border-border text-danger hover:bg-danger-tint"
                 >
-                  ✕
+                  <TrashIcon />
                 </button>
               </div>
               <input
@@ -358,7 +359,7 @@ function KnowledgeCheckEditor({
               onClick={() => setQuizzes(quizzes.filter((x) => x.id !== q.id))}
               className="ml-auto grid h-7 w-7 place-items-center rounded-md border border-border text-danger transition hover:bg-danger-tint disabled:opacity-30"
             >
-              ✕
+              <TrashIcon />
             </button>
           </div>
           <QuizEditor

@@ -14,6 +14,7 @@ import {
 } from "@/lib/types";
 import { QUIZ_LABELS, newQuiz } from "@/lib/factories";
 import { uid } from "@/lib/store";
+import { TrashIcon } from "./Icons";
 
 export function QuizEditor({
   quiz,
@@ -461,7 +462,7 @@ function RemoveBtn({ onClick }: { onClick: () => void }) {
       onClick={onClick}
       className="grid h-8 w-8 shrink-0 place-items-center rounded-md border border-border text-danger transition hover:bg-danger-tint"
     >
-      ✕
+      <TrashIcon />
     </button>
   );
 }
