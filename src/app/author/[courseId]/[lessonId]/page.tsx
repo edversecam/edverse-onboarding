@@ -6,7 +6,9 @@ import { useRef, useState } from "react";
 import { Logo } from "@/components/brand/Logo";
 import { SaveButton } from "@/components/author/SaveButton";
 import { BlockEditor } from "@/components/author/BlockEditor";
+import { RichTextEditor } from "@/components/author/RichTextEditor";
 import { BlockRenderer } from "@/components/blocks/BlockRenderer";
+import { RichContent } from "@/components/blocks/RichText";
 import { DragHandle, useSortable } from "@/components/author/Sortable";
 import { cn } from "@/lib/utils";
 import { BLOCK_LABELS, newBlock } from "@/lib/factories";
@@ -138,10 +140,10 @@ export default function LessonEditor() {
               <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-muted">
                 Summary
               </span>
-              <input
+              <RichTextEditor
                 value={lesson.summary ?? ""}
-                onChange={(e) => patchLesson(course.id, lesson.id, { summary: e.target.value })}
-                className="input"
+                minRows={2}
+                onChange={(html) => patchLesson(course.id, lesson.id, { summary: html })}
               />
             </label>
           </section>
@@ -226,7 +228,9 @@ export default function LessonEditor() {
             <h1 className="font-display text-2xl font-semibold text-foreground">
               {lesson.title}
             </h1>
-            {lesson.summary && <p className="mt-1 text-muted">{lesson.summary}</p>}
+            {lesson.summary && (
+              <RichContent text={lesson.summary} className="mt-1 text-muted" />
+            )}
             <div className="mt-6 space-y-8">
               {blocks.map((b) => (
                 <BlockRenderer key={b.id} block={b} />

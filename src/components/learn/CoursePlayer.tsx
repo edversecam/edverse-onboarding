@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Course, flattenLessons } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { BlockRenderer } from "@/components/blocks/BlockRenderer";
+import { RichContent } from "@/components/blocks/RichText";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useRole } from "@/lib/auth";
 import { useProgress } from "@/lib/progress";
@@ -127,7 +128,7 @@ export function CoursePlayer({ course }: { course: Course }) {
                 {current.lesson.title}
               </h1>
               {current.lesson.summary && (
-                <p className="mt-2 text-muted">{current.lesson.summary}</p>
+                <RichContent text={current.lesson.summary} className="mt-2 text-muted" />
               )}
             </div>
 
