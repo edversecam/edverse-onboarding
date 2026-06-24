@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import { Logo } from "@/components/brand/Logo";
 import { SaveButton } from "@/components/author/SaveButton";
+import { RichTextEditor } from "@/components/author/RichTextEditor";
 import { cn } from "@/lib/utils";
 import {
   addLesson,
@@ -92,13 +93,10 @@ export default function CourseEditor() {
               </Field>
             </div>
             <Field label="Description">
-              <textarea
+              <RichTextEditor
                 value={course.description ?? ""}
-                onChange={(e) =>
-                  patchCourse(course.id, { description: e.target.value })
-                }
-                rows={2}
-                className="input"
+                minRows={3}
+                onChange={(html) => patchCourse(course.id, { description: html })}
               />
             </Field>
           </div>

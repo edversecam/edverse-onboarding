@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { SlideBlock as SlideBlockT } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { RichText } from "./RichText";
+import { RichContent } from "./RichText";
 
 export function SlideBlock({ block }: { block: SlideBlockT }) {
   const [i, setI] = useState(0);
@@ -31,7 +31,7 @@ export function SlideBlock({ block }: { block: SlideBlockT }) {
             {slide.title}
           </h4>
         )}
-        <RichText text={slide.body} className="text-[15px]" />
+        <RichContent text={slide.body} className="text-[15px]" />
       </div>
 
       {/* Controls */}

@@ -7,6 +7,7 @@ import { newQuiz } from "@/lib/factories";
 import { cn } from "@/lib/utils";
 import { QuizEditor } from "./QuizEditor";
 import { ImageUpload } from "./ImageUpload";
+import { RichTextEditor } from "./RichTextEditor";
 import { DragHandle, useSortable } from "./Sortable";
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
@@ -34,8 +35,8 @@ export function BlockEditor({
           <Row label="Heading">
             <input value={block.heading ?? ""} onChange={(e) => onChange({ ...block, heading: e.target.value })} className="input" />
           </Row>
-          <Row label="Body (supports **bold**, *italic*, and - bullets)">
-            <textarea value={block.body} onChange={(e) => onChange({ ...block, body: e.target.value })} rows={5} className="input" />
+          <Row label="Body">
+            <RichTextEditor value={block.body} onChange={(html) => onChange({ ...block, body: html })} minRows={5} />
           </Row>
         </div>
       );
@@ -47,7 +48,7 @@ export function BlockEditor({
             <input value={block.heading ?? ""} onChange={(e) => onChange({ ...block, heading: e.target.value })} className="input" />
           </Row>
           <Row label="Body">
-            <textarea value={block.body} onChange={(e) => onChange({ ...block, body: e.target.value })} rows={4} className="input" />
+            <RichTextEditor value={block.body} onChange={(html) => onChange({ ...block, body: html })} minRows={4} />
           </Row>
           <Row label="Image">
             <ImageUpload
@@ -93,7 +94,7 @@ export function BlockEditor({
             </Row>
           </div>
           <Row label="Body">
-            <textarea value={block.body} onChange={(e) => onChange({ ...block, body: e.target.value })} rows={3} className="input" />
+            <RichTextEditor value={block.body} onChange={(html) => onChange({ ...block, body: html })} minRows={3} />
           </Row>
         </div>
       );
@@ -124,15 +125,15 @@ export function BlockEditor({
                   ✕
                 </button>
               </div>
-              <textarea
-                value={it.body}
-                placeholder="Body"
-                onChange={(e) =>
-                  onChange({ ...block, items: block.items.map((x) => (x.id === it.id ? { ...x, body: e.target.value } : x)) })
-                }
-                rows={2}
-                className="input mt-2"
-              />
+              <div className="mt-2">
+                <RichTextEditor
+                  value={it.body}
+                  minRows={2}
+                  onChange={(html) =>
+                    onChange({ ...block, items: block.items.map((x) => (x.id === it.id ? { ...x, body: html } : x)) })
+                  }
+                />
+              </div>
             </div>
           ))}
           <button
@@ -243,13 +244,13 @@ export function BlockEditor({
                 onChange={(e) => onChange({ ...block, slides: block.slides.map((x) => (x.id === s.id ? { ...x, title: e.target.value } : x)) })}
                 className="input font-semibold"
               />
-              <textarea
-                value={s.body}
-                placeholder="Slide content (supports **bold**, *italic*, - bullets)"
-                onChange={(e) => onChange({ ...block, slides: block.slides.map((x) => (x.id === s.id ? { ...x, body: e.target.value } : x)) })}
-                rows={3}
-                className="input mt-2"
-              />
+              <div className="mt-2">
+                <RichTextEditor
+                  value={s.body}
+                  minRows={3}
+                  onChange={(html) => onChange({ ...block, slides: block.slides.map((x) => (x.id === s.id ? { ...x, body: html } : x)) })}
+                />
+              </div>
               <input
                 value={s.imageUrl ?? ""}
                 placeholder="Image URL (optional)"

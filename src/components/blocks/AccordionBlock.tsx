@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { AccordionBlock as AccordionBlockT } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { RichText } from "./RichText";
+import { RichContent } from "./RichText";
 
 export function AccordionBlock({ block }: { block: AccordionBlockT }) {
   const [open, setOpen] = useState<string | null>(block.items[0]?.id ?? null);
@@ -40,7 +40,7 @@ export function AccordionBlock({ block }: { block: AccordionBlockT }) {
             >
               <div className="overflow-hidden">
                 <div className="px-4 pb-4 text-sm">
-                  <RichText text={item.body} />
+                  <RichContent text={item.body} />
                 </div>
               </div>
             </div>

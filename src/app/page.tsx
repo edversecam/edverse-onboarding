@@ -9,6 +9,16 @@ import { revalidateCourses, useCourses, useCoursesLoaded } from "@/lib/store";
 import { useRole, useUser } from "@/lib/auth";
 import { flattenLessons } from "@/lib/types";
 
+/** Plain-text preview of a (possibly HTML) description for the course card. */
+function stripHtml(s: string): string {
+  return s
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 export default function Home() {
   const courses = useCourses();
   const loaded = useCoursesLoaded();
@@ -82,8 +92,8 @@ export default function Home() {
                 <h3 className="mt-1 font-display text-xl font-semibold text-foreground">
                   {course.title}
                 </h3>
-                <p className="mt-2 flex-1 text-sm text-muted">
-                  {course.description}
+                <p className="mt-2 line-clamp-3 flex-1 text-sm text-muted">
+                  {stripHtml(course.description ?? "")}
                 </p>
                 <div className="mt-4 flex items-center gap-4 text-xs font-medium text-muted">
                   <span>{course.modules.length} modules</span>

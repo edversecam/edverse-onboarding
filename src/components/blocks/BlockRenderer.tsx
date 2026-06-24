@@ -1,6 +1,6 @@
 import { Block, blockQuizzes } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { RichText } from "./RichText";
+import { RichContent } from "./RichText";
 import { AccordionBlock } from "./AccordionBlock";
 import { FlipCardBlock } from "./FlipCardBlock";
 import { SlideBlock } from "./SlideBlock";
@@ -29,7 +29,7 @@ function renderBlock(block: Block) {
       return (
         <section>
           <Heading>{block.heading}</Heading>
-          <RichText text={block.body} className="text-[15px]" />
+          <RichContent text={block.body} className="text-[15px]" />
         </section>
       );
 
@@ -39,7 +39,7 @@ function renderBlock(block: Block) {
         <section className="grid items-center gap-6 md:grid-cols-2">
           <div className={cn(right ? "md:order-1" : "md:order-2")}>
             <Heading>{block.heading}</Heading>
-            <RichText text={block.body} className="text-[15px]" />
+            <RichContent text={block.body} className="text-[15px]" />
           </div>
           <div className={cn(right ? "md:order-2" : "md:order-1")}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -66,7 +66,7 @@ function renderBlock(block: Block) {
               {block.title}
             </p>
           )}
-          <RichText text={block.body} className="text-sm" />
+          <RichContent text={block.body} className="text-sm" />
         </aside>
       );
     }

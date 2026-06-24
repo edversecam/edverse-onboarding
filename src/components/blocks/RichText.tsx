@@ -1,5 +1,31 @@
 import { Fragment } from "react";
 
+/** Strip dangerous bits from author-authored HTML before rendering. */
+function sanitizeHtml(html: string): string {
+  return html
+    .replace(/<\s*(script|style|iframe|object|embed)[^>]*>[\s\S]*?<\s*\/\s*\1\s*>/gi, "")
+    .replace(/\son\w+\s*=\s*"[^"]*"/gi, "")
+    .replace(/\son\w+\s*=\s*'[^']*'/gi, "")
+    .replace(/javascript:/gi, "");
+}
+
+/**
+ * Renders block content. New content is rich HTML (from the editor); older
+ * content uses the lightweight bold / italic / bullet markup — both supported.
+ */
+export function RichContent({ text, className }: { text: string; className?: string }) {
+  const looksLikeHtml = /<\/?[a-z][\s\S]*>/i.test(text);
+  if (looksLikeHtml) {
+    return (
+      <div
+        className={`rich-content ${className ?? ""}`}
+        dangerouslySetInnerHTML={{ __html: sanitizeHtml(text) }}
+      />
+    );
+  }
+  return <RichText text={text} className={className} />;
+}
+
 /**
  * Minimal, dependency-free renderer for the lightweight markup authors type
  * into block bodies. Supports blank-line paragraphs, `- ` bullet lists, and
