@@ -1,16 +1,18 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { SlideBlock as SlideBlockT } from "@/lib/types";
+import { SlideBlock as SlideBlockT, Slide } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { RichContent } from "./RichText";
+
+/** A single thing the carousel shows: a slide image and/or text. */
+type View = { id: string; imgSrc?: string; title?: string; body?: string };
 
 export function SlideBlock({ block }: { block: SlideBlockT }) {
   const [i, setI] = useState(0);
   const cardRef = useRef<HTMLDivElement>(null);
   const [isFull, setIsFull] = useState(false);
-
-  const slides = block.slides;
+  const views = useExpandedViews(block.slides);
 
   // Keep our state in sync with the browser's native fullscreen.
   useEffect(() => {
@@ -18,6 +20,11 @@ export function SlideBlock({ block }: { block: SlideBlockT }) {
     document.addEventListener("fullscreenchange", onChange);
     return () => document.removeEventListener("fullscreenchange", onChange);
   }, []);
+
+  // If the deck expanded/collapsed and the current index is now out of range, clamp it.
+  useEffect(() => {
+    setI((n) => Math.max(0, Math.min(views.length - 1, n)));
+  }, [views.length]);
 
   const toggleFull = useCallback(() => {
     if (document.fullscreenElement) {
@@ -27,12 +34,11 @@ export function SlideBlock({ block }: { block: SlideBlockT }) {
     }
   }, []);
 
-  if (slides.length === 0) return null;
+  if (views.length === 0) return null;
 
-  const total = slides.length;
+  const total = views.length;
   const clamp = (n: number) => Math.max(0, Math.min(total - 1, n));
-  const slide = slides[i];
-  const imgSrc = slide.imageUrl ? slideImageUrl(slide.imageUrl) : null;
+  const view = views[Math.min(i, total - 1)];
 
   return (
     <div
@@ -49,7 +55,7 @@ export function SlideBlock({ block }: { block: SlideBlockT }) {
           isFull && "flex flex-1 items-center justify-center p-3"
         )}
       >
-        {imgSrc ? (
+        {view.imgSrc ? (
           <div
             className={cn(
               "group relative overflow-hidden rounded-xl border border-border bg-surface-2",
@@ -64,8 +70,8 @@ export function SlideBlock({ block }: { block: SlideBlockT }) {
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={imgSrc}
-                alt={slide.title ?? `Slide ${i + 1}`}
+                src={view.imgSrc}
+                alt={view.title ?? `Slide ${i + 1}`}
                 className={cn(
                   "h-full w-full object-contain transition",
                   !isFull && "group-hover:brightness-95"
@@ -84,12 +90,12 @@ export function SlideBlock({ block }: { block: SlideBlockT }) {
           </div>
         ) : null}
 
-        {!isFull && slide.title && (
+        {!isFull && view.title && (
           <h4 className="mb-2 font-display text-2xl font-semibold text-foreground">
-            {slide.title}
+            {view.title}
           </h4>
         )}
-        {!isFull && <RichContent text={slide.body} className="text-[15px]" />}
+        {!isFull && view.body && <RichContent text={view.body} className="text-[15px]" />}
       </div>
 
       {/* Controls */}
@@ -112,9 +118,9 @@ export function SlideBlock({ block }: { block: SlideBlockT }) {
         </button>
 
         <div className="flex items-center gap-1.5">
-          {slides.map((s, idx) => (
+          {views.map((v, idx) => (
             <button
-              key={s.id}
+              key={v.id}
               type="button"
               aria-label={`Go to slide ${idx + 1}`}
               onClick={() => setI(idx)}
@@ -144,25 +150,92 @@ export function SlideBlock({ block }: { block: SlideBlockT }) {
 }
 
 /**
- * Turn a Google Slides link into a static slide image (PNG export) so it shows
- * inline with Edverse's own slide navigation and no Google control bar. A link
- * to a specific slide (.../edit#slide=id.gXXXX) exports just that slide;
- * otherwise the first slide is exported. Plain image URLs are returned as-is.
- * The deck must be shared "Anyone with the link can view" for the export to load.
+ * Builds the list of views from the block's sub-slides. A bare Google Slides
+ * deck link (no specific slide) is expanded into one image per deck slide via
+ * /api/slides; if that key/endpoint isn't available it falls back to the deck's
+ * first slide. Plain images and slide-specific links map 1:1.
  */
-function slideImageUrl(url: string): string {
+function useExpandedViews(slides: Slide[]): View[] {
+  const signature = slides.map((s) => `${s.id}:${s.imageUrl ?? ""}`).join("|");
+  const [views, setViews] = useState<View[]>(() => slides.map(baseView));
+
+  useEffect(() => {
+    const base = slides.map(baseView);
+    setViews(base);
+
+    let cancelled = false;
+    (async () => {
+      const out: View[] = [];
+      let expanded = false;
+      for (const s of slides) {
+        const deck = s.imageUrl ? parseGoogleDeck(s.imageUrl) : null;
+        if (deck && !deck.pageId) {
+          try {
+            const res = await fetch(`/api/slides?id=${encodeURIComponent(deck.deckId)}`);
+            const data: { pageIds?: string[] } = await res.json();
+            const ids = data.pageIds ?? [];
+            if (ids.length > 1) {
+              for (const pid of ids) {
+                out.push({
+                  id: `${s.id}:${pid}`,
+                  imgSrc: `https://docs.google.com/presentation/d/${deck.deckId}/export/png?pageid=${pid}`,
+                });
+              }
+              expanded = true;
+              continue;
+            }
+          } catch {
+            // fall through to the single-image fallback below
+          }
+        }
+        out.push(baseView(s));
+      }
+      if (!cancelled && expanded) setViews(out);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [signature]);
+
+  return views;
+}
+
+function baseView(s: Slide): View {
+  return {
+    id: s.id,
+    imgSrc: s.imageUrl ? toImageUrl(s.imageUrl) : undefined,
+    title: s.title,
+    body: s.body,
+  };
+}
+
+/** Parse a Google Slides deck link into its deck id and optional slide id. */
+function parseGoogleDeck(url: string): { deckId: string; pageId: string | null } | null {
   try {
     const u = new URL(url.trim());
-    // Only rewrite normal decks (/presentation/d/ID); leave everything else alone.
-    const deck = u.pathname.match(/\/presentation\/d\/(?!e\/)([^/]+)/);
-    if (u.hostname !== "docs.google.com" || !deck) return url;
-    const deckId = deck[1];
-    const pageMatch = (u.hash + u.search).match(/slide=id\.([A-Za-z0-9_-]+)/);
-    const base = `https://docs.google.com/presentation/d/${deckId}/export/png`;
-    return pageMatch ? `${base}?pageid=${pageMatch[1]}` : base;
+    if (u.hostname !== "docs.google.com") return null;
+    const m = u.pathname.match(/\/presentation\/d\/(?!e\/)([^/]+)/);
+    if (!m) return null;
+    const page = (u.hash + u.search).match(/slide=id\.([A-Za-z0-9_-]+)/);
+    return { deckId: m[1], pageId: page ? page[1] : null };
   } catch {
-    return url;
+    return null;
   }
+}
+
+/**
+ * Turn a Google Slides link into a static slide image (PNG export). A link to a
+ * specific slide exports that slide; a bare deck link exports the first slide.
+ * Plain image URLs are returned unchanged. The deck must be shared "Anyone with
+ * the link can view" for the export to load.
+ */
+function toImageUrl(url: string): string {
+  const deck = parseGoogleDeck(url);
+  if (!deck) return url;
+  const base = `https://docs.google.com/presentation/d/${deck.deckId}/export/png`;
+  return deck.pageId ? `${base}?pageid=${deck.pageId}` : base;
 }
 
 function Arrow({ dir }: { dir: "left" | "right" }) {
