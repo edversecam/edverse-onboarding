@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { SlideBlock as SlideBlockT, Slide } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { RichContent } from "./RichText";
@@ -11,12 +11,13 @@ type View = { id: string; imgSrc?: string; embedSrc?: string; title?: string; bo
 export function SlideBlock({ block }: { block: SlideBlockT }) {
   const [i, setI] = useState(0);
   const cardRef = useRef<HTMLDivElement>(null);
-  const [isFull, setIsFull] = useState(false);
+  const mediaRef = useRef<HTMLDivElement>(null);
+  const [fsEl, setFsEl] = useState<Element | null>(null);
   const views = useExpandedViews(block.slides);
 
-  // Keep our state in sync with the browser's native fullscreen.
+  // Track which element (if any) is currently fullscreen.
   useEffect(() => {
-    const onChange = () => setIsFull(document.fullscreenElement === cardRef.current);
+    const onChange = () => setFsEl(document.fullscreenElement);
     document.addEventListener("fullscreenchange", onChange);
     return () => document.removeEventListener("fullscreenchange", onChange);
   }, []);
@@ -26,48 +27,58 @@ export function SlideBlock({ block }: { block: SlideBlockT }) {
     setI((n) => Math.max(0, Math.min(views.length - 1, n)));
   }, [views.length]);
 
-  const toggleFull = useCallback(() => {
-    if (document.fullscreenElement) {
-      document.exitFullscreen?.();
-    } else {
-      cardRef.current?.requestFullscreen?.();
-    }
-  }, []);
-
   if (views.length === 0) return null;
 
   const total = views.length;
   const clamp = (n: number) => Math.max(0, Math.min(total - 1, n));
   const view = views[Math.min(i, total - 1)];
+  const isEmbed = Boolean(view.embedSrc);
+  const isCardFull = fsEl != null && fsEl === cardRef.current;
+  const isAnyFull = fsEl != null;
+
+  // For a Gamma embed, present the player edge-to-edge (like Gamma's own present
+  // mode). For image decks, fullscreen the whole card so Edverse's Back/Next stay
+  // on screen.
+  const toggleFull = () => {
+    if (document.fullscreenElement) {
+      document.exitFullscreen?.();
+    } else if (isEmbed) {
+      mediaRef.current?.requestFullscreen?.();
+    } else {
+      cardRef.current?.requestFullscreen?.();
+    }
+  };
 
   return (
     <div
       ref={cardRef}
       className={cn(
         "overflow-hidden rounded-2xl border border-border bg-surface shadow-[var(--shadow-card)]",
-        isFull && "flex h-screen w-screen flex-col rounded-none border-0 bg-black"
+        isCardFull && "flex h-screen w-screen flex-col rounded-none border-0 bg-black"
       )}
     >
       {/* Slide body */}
       <div
         className={cn(
           "min-h-[16rem] p-6 sm:p-8",
-          isFull && "flex flex-1 items-center justify-center p-3"
+          isCardFull && "flex flex-1 items-center justify-center p-3"
         )}
       >
         {view.embedSrc || view.imgSrc ? (
           <div
+            ref={mediaRef}
             className={cn(
               "group relative overflow-hidden rounded-xl border border-border bg-surface-2",
-              isFull ? "h-full w-full border-0 bg-transparent" : "mb-5 aspect-video w-full"
+              isAnyFull ? "h-full w-full border-0 bg-transparent" : "mb-5 aspect-video w-full"
             )}
           >
             {view.embedSrc ? (
               <iframe
                 src={view.embedSrc}
                 title={view.title ?? `Slide ${i + 1}`}
+                allow="fullscreen"
                 allowFullScreen
-                className="h-full w-full"
+                className="h-full w-full bg-white"
               />
             ) : (
               <button
@@ -82,7 +93,7 @@ export function SlideBlock({ block }: { block: SlideBlockT }) {
                   alt={view.title ?? `Slide ${i + 1}`}
                   className={cn(
                     "h-full w-full object-contain transition",
-                    !isFull && "group-hover:brightness-95"
+                    !isAnyFull && "group-hover:brightness-95"
                   )}
                 />
               </button>
@@ -90,28 +101,28 @@ export function SlideBlock({ block }: { block: SlideBlockT }) {
             <button
               type="button"
               onClick={toggleFull}
-              aria-label={isFull ? "Exit full screen" : "Full screen"}
-              title={isFull ? "Exit full screen" : "Full screen"}
-              className="absolute right-2 top-2 grid h-9 w-9 place-items-center rounded-lg bg-black/55 text-white opacity-0 transition hover:bg-black/75 focus-visible:opacity-100 group-hover:opacity-100"
+              aria-label={isAnyFull ? "Exit full screen" : "Full screen"}
+              title={isAnyFull ? "Exit full screen" : isEmbed ? "Present full screen" : "Full screen"}
+              className="absolute right-2 top-2 z-10 grid h-9 w-9 place-items-center rounded-lg bg-black/55 text-white opacity-0 transition hover:bg-black/75 focus-visible:opacity-100 group-hover:opacity-100"
             >
-              <FullscreenIcon expanded={isFull} />
+              <FullscreenIcon expanded={isAnyFull} />
             </button>
           </div>
         ) : null}
 
-        {!isFull && view.title && (
+        {!isCardFull && view.title && (
           <h4 className="mb-2 font-display text-2xl font-semibold text-foreground">
             {view.title}
           </h4>
         )}
-        {!isFull && view.body && <RichContent text={view.body} className="text-[15px]" />}
+        {!isCardFull && view.body && <RichContent text={view.body} className="text-[15px]" />}
       </div>
 
       {/* Controls */}
       <div
         className={cn(
           "flex items-center justify-between gap-3 border-t border-border px-4 py-3",
-          isFull ? "bg-black/80" : "bg-surface-2/60"
+          isCardFull ? "bg-black/80" : "bg-surface-2/60"
         )}
       >
         {/* Minimized Back — icon only */}
