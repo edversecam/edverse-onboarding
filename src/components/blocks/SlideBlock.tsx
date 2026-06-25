@@ -6,7 +6,15 @@ import { cn } from "@/lib/utils";
 import { RichContent } from "./RichText";
 
 /** A single thing the carousel shows: a slide image, an embed, and/or text. */
-type View = { id: string; imgSrc?: string; embedSrc?: string; title?: string; body?: string };
+type View = {
+  id: string;
+  imgSrc?: string;
+  embedSrc?: string;
+  /** Original deck link, used to open the native presentation (Gamma). */
+  linkUrl?: string;
+  title?: string;
+  body?: string;
+};
 
 export function SlideBlock({ block }: { block: SlideBlockT }) {
   const [i, setI] = useState(0);
@@ -97,6 +105,20 @@ export function SlideBlock({ block }: { block: SlideBlockT }) {
                   )}
                 />
               </button>
+            )}
+            {view.embedSrc && view.linkUrl && (
+              <a
+                href={view.linkUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Open this deck in Gamma's presentation mode (new tab)"
+                className="absolute left-2 top-2 z-10 inline-flex items-center gap-1.5 rounded-lg bg-black/55 px-2.5 py-1.5 text-xs font-semibold text-white transition hover:bg-black/75"
+              >
+                Present in Gamma
+                <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M7 17 17 7M9 7h8v8" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </a>
             )}
             <button
               type="button"
@@ -226,7 +248,7 @@ function baseView(s: Slide): View {
   const src = s.imageUrl?.trim();
   if (!src) return { id: s.id, title: s.title, body: s.body };
   const gamma = gammaEmbedUrl(src);
-  if (gamma) return { id: s.id, embedSrc: gamma, title: s.title, body: s.body };
+  if (gamma) return { id: s.id, embedSrc: gamma, linkUrl: src, title: s.title, body: s.body };
   return { id: s.id, imgSrc: toImageUrl(src), title: s.title, body: s.body };
 }
 
