@@ -62,6 +62,13 @@ export default function LessonEditor() {
     setLessonBlocks(course.id, lesson.id, blocks.map((x) => (x.id === id ? b : x)));
   const removeBlock = (id: string) =>
     setLessonBlocks(course.id, lesson.id, blocks.filter((x) => x.id !== id));
+  const moveBlock = (i: number, dir: -1 | 1) => {
+    const j = i + dir;
+    if (j < 0 || j >= blocks.length) return;
+    const next = [...blocks];
+    [next[i], next[j]] = [next[j], next[i]];
+    setLessonBlocks(course.id, lesson.id, next);
+  };
   const addBlock = (kind: BlockKind) => {
     const b = newBlock(kind);
     setLessonBlocks(course.id, lesson.id, [...blocks, b]);
@@ -185,7 +192,18 @@ export default function LessonEditor() {
                 )}
               >
                 <div className="flex items-center gap-2 border-b border-border px-4 py-2.5">
-                  <DragHandle label="Drag to reorder block" small {...blockSort.handleProps(b.id)} />
+                  {b.kind === "slide" ? (
+                    <span className="flex shrink-0 items-center">
+                      <IconBtn label="Move block up" onClick={() => moveBlock(i, -1)} disabled={i === 0}>
+                        <ChevronUpIcon />
+                      </IconBtn>
+                      <IconBtn label="Move block down" onClick={() => moveBlock(i, 1)} disabled={i === blocks.length - 1}>
+                        <ChevronDownIcon />
+                      </IconBtn>
+                    </span>
+                  ) : (
+                    <DragHandle label="Drag to reorder block" small {...blockSort.handleProps(b.id)} />
+                  )}
                   <span className="shrink-0 rounded-md bg-brand-tint px-2 py-0.5 text-xs font-semibold text-brand-700">
                     {BLOCK_LABELS[b.kind]}
                   </span>
@@ -294,6 +312,13 @@ function ChevronUpIcon() {
   return (
     <svg viewBox="0 0 24 24" className={iconCls} fill="none" stroke="currentColor" strokeWidth="2">
       <path d="M6 15l6-6 6 6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+function ChevronDownIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className={iconCls} fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
