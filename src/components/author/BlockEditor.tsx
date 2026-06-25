@@ -9,7 +9,7 @@ import { QuizEditor } from "./QuizEditor";
 import { ImageUpload } from "./ImageUpload";
 import { RichTextEditor } from "./RichTextEditor";
 import { DragHandle, useSortable } from "./Sortable";
-import { CopyIcon, TrashIcon } from "./Icons";
+import { ChevronDownIcon, ChevronUpIcon, CopyIcon, TrashIcon } from "./Icons";
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -215,7 +215,7 @@ export function BlockEditor({
                   }}
                   className="ml-auto grid h-7 w-7 place-items-center rounded-md border border-border text-muted hover:bg-surface-2 disabled:opacity-30"
                 >
-                  ▲
+                  <ChevronUpIcon />
                 </button>
                 <button
                   type="button"
@@ -228,7 +228,7 @@ export function BlockEditor({
                   }}
                   className="grid h-7 w-7 place-items-center rounded-md border border-border text-muted hover:bg-surface-2 disabled:opacity-30"
                 >
-                  ▼
+                  <ChevronDownIcon />
                 </button>
                 <button
                   type="button"
