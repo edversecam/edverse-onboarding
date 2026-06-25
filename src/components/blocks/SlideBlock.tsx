@@ -5,8 +5,8 @@ import { SlideBlock as SlideBlockT, Slide } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { RichContent } from "./RichText";
 
-/** A single thing the carousel shows: a slide image and/or text. */
-type View = { id: string; imgSrc?: string; title?: string; body?: string };
+/** A single thing the carousel shows: a slide image, an embed, and/or text. */
+type View = { id: string; imgSrc?: string; embedSrc?: string; title?: string; body?: string };
 
 export function SlideBlock({ block }: { block: SlideBlockT }) {
   const [i, setI] = useState(0);
@@ -55,29 +55,38 @@ export function SlideBlock({ block }: { block: SlideBlockT }) {
           isFull && "flex flex-1 items-center justify-center p-3"
         )}
       >
-        {view.imgSrc ? (
+        {view.embedSrc || view.imgSrc ? (
           <div
             className={cn(
               "group relative overflow-hidden rounded-xl border border-border bg-surface-2",
               isFull ? "h-full w-full border-0 bg-transparent" : "mb-5 aspect-video w-full"
             )}
           >
-            <button
-              type="button"
-              onClick={() => setI((n) => (n + 1) % total)}
-              title="Click for the next slide"
-              className="block h-full w-full cursor-pointer"
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={view.imgSrc}
-                alt={view.title ?? `Slide ${i + 1}`}
-                className={cn(
-                  "h-full w-full object-contain transition",
-                  !isFull && "group-hover:brightness-95"
-                )}
+            {view.embedSrc ? (
+              <iframe
+                src={view.embedSrc}
+                title={view.title ?? `Slide ${i + 1}`}
+                allowFullScreen
+                className="h-full w-full"
               />
-            </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setI((n) => (n + 1) % total)}
+                title="Click for the next slide"
+                className="block h-full w-full cursor-pointer"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={view.imgSrc}
+                  alt={view.title ?? `Slide ${i + 1}`}
+                  className={cn(
+                    "h-full w-full object-contain transition",
+                    !isFull && "group-hover:brightness-95"
+                  )}
+                />
+              </button>
+            )}
             <button
               type="button"
               onClick={toggleFull}
@@ -203,12 +212,11 @@ function useExpandedViews(slides: Slide[]): View[] {
 }
 
 function baseView(s: Slide): View {
-  return {
-    id: s.id,
-    imgSrc: s.imageUrl ? toImageUrl(s.imageUrl) : undefined,
-    title: s.title,
-    body: s.body,
-  };
+  const src = s.imageUrl?.trim();
+  if (!src) return { id: s.id, title: s.title, body: s.body };
+  const gamma = gammaEmbedUrl(src);
+  if (gamma) return { id: s.id, embedSrc: gamma, title: s.title, body: s.body };
+  return { id: s.id, imgSrc: toImageUrl(src), title: s.title, body: s.body };
 }
 
 /** Parse a Google Slides deck link into its deck id and optional slide id. */
@@ -236,6 +244,27 @@ function toImageUrl(url: string): string {
   if (!deck) return url;
   const base = `https://docs.google.com/presentation/d/${deck.deckId}/export/png`;
   return deck.pageId ? `${base}?pageid=${deck.pageId}` : base;
+}
+
+/**
+ * Turn a Gamma deck link into its embeddable player URL. Gamma exposes decks
+ * only as an interactive embed (no per-card image export), so a Gamma link is
+ * shown as Gamma's own player. Share URLs end in the deck token
+ * (…/docs/Title-<token>); the embed lives at gamma.app/embed/<token>. The deck
+ * must be shared publicly for learners to see it. Returns null for non-Gamma URLs.
+ */
+function gammaEmbedUrl(url: string): string | null {
+  try {
+    const u = new URL(url.trim());
+    if (!/(^|\.)gamma\.app$/.test(u.hostname)) return null;
+    if (u.pathname.startsWith("/embed/")) return `https://gamma.app${u.pathname}`;
+    const segment = u.pathname.split("/").filter(Boolean).pop();
+    if (!segment) return null;
+    const token = segment.includes("-") ? segment.slice(segment.lastIndexOf("-") + 1) : segment;
+    return token ? `https://gamma.app/embed/${token}` : null;
+  } catch {
+    return null;
+  }
 }
 
 function Arrow({ dir }: { dir: "left" | "right" }) {
