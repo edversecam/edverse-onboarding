@@ -13,12 +13,22 @@ export function SlideBlock({ block }: { block: SlideBlockT }) {
   const total = slides.length;
   const clamp = (n: number) => Math.max(0, Math.min(total - 1, n));
   const slide = slides[i];
+  const embedUrl = slide.imageUrl ? slideEmbedUrl(slide.imageUrl) : null;
 
   return (
     <div className="overflow-hidden rounded-2xl border border-border bg-surface shadow-[var(--shadow-card)]">
       {/* Slide body */}
       <div className="min-h-[16rem] p-6 sm:p-8">
-        {slide.imageUrl && (
+        {embedUrl ? (
+          <div className="mb-5 aspect-video w-full overflow-hidden rounded-xl border border-border bg-surface-2">
+            <iframe
+              src={embedUrl}
+              title={slide.title ?? "Slide"}
+              allowFullScreen
+              className="h-full w-full"
+            />
+          </div>
+        ) : slide.imageUrl ? (
           <button
             type="button"
             onClick={() => setI((n) => (n + 1) % total)}
@@ -32,7 +42,7 @@ export function SlideBlock({ block }: { block: SlideBlockT }) {
               className="max-h-72 w-full rounded-xl border border-border object-cover transition group-hover:brightness-95"
             />
           </button>
-        )}
+        ) : null}
         {slide.title && (
           <h4 className="mb-2 font-display text-2xl font-semibold text-foreground">
             {slide.title}
@@ -83,6 +93,30 @@ export function SlideBlock({ block }: { block: SlideBlockT }) {
       </div>
     </div>
   );
+}
+
+/**
+ * If the URL points at a Google Slides deck, return an embeddable player URL.
+ * Handles both normal decks (/presentation/d/ID/...) and published decks
+ * (/presentation/d/e/ID/...). Returns null for plain image URLs, which are
+ * rendered with an img tag instead.
+ */
+function slideEmbedUrl(url: string): string | null {
+  try {
+    const u = new URL(url.trim());
+    if (u.hostname !== "docs.google.com" || !u.pathname.includes("/presentation/")) return null;
+    const published = u.pathname.match(/\/presentation\/d\/e\/([^/]+)/);
+    if (published) {
+      return `https://docs.google.com/presentation/d/e/${published[1]}/embed?start=false&loop=false&delayms=60000`;
+    }
+    const deck = u.pathname.match(/\/presentation\/d\/([^/]+)/);
+    if (deck) {
+      return `https://docs.google.com/presentation/d/${deck[1]}/embed?start=false&loop=false&delayms=60000`;
+    }
+    return null;
+  } catch {
+    return null;
+  }
 }
 
 function Arrow({ dir }: { dir: "left" | "right" }) {

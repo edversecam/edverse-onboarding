@@ -384,7 +384,7 @@ function SlideListEditor({
           </div>
           <input
             value={s.imageUrl ?? ""}
-            placeholder="Slide URL (optional) — image shown on this slide"
+            placeholder="Slide URL (optional) — image link or Google Slides link"
             onChange={(e) => onChange({ ...block, slides: block.slides.map((x) => (x.id === s.id ? { ...x, imageUrl: e.target.value } : x)) })}
             className="input mt-2"
           />
