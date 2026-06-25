@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef } from "react";
-import { Block, KnowledgeCheckBlock, Quiz, blockQuizzes } from "@/lib/types";
+import { Block, KnowledgeCheckBlock, Quiz, SlideBlock, blockQuizzes } from "@/lib/types";
 import { uid } from "@/lib/store";
 import { newQuiz } from "@/lib/factories";
 import { cn } from "@/lib/utils";
@@ -9,7 +9,7 @@ import { QuizEditor } from "./QuizEditor";
 import { ImageUpload } from "./ImageUpload";
 import { RichTextEditor } from "./RichTextEditor";
 import { DragHandle, useSortable } from "./Sortable";
-import { ChevronDownIcon, ChevronUpIcon, CopyIcon, TrashIcon } from "./Icons";
+import { CopyIcon, TrashIcon } from "./Icons";
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -193,97 +193,7 @@ export function BlockEditor({
       );
 
     case "slide":
-      return (
-        <div className="space-y-3">
-          <Row label="Heading">
-            <input value={block.heading ?? ""} onChange={(e) => onChange({ ...block, heading: e.target.value })} className="input" />
-          </Row>
-          {block.slides.map((s, idx) => (
-            <div key={s.id} className="rounded-lg border border-border p-3">
-              <div className="mb-2 flex items-center gap-2">
-                <span className="rounded-md bg-brand-tint px-2 py-0.5 text-xs font-semibold text-brand-700">
-                  Slide {idx + 1}
-                </span>
-                <button
-                  type="button"
-                  aria-label="Move up"
-                  disabled={idx === 0}
-                  onClick={() => {
-                    const next = [...block.slides];
-                    [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
-                    onChange({ ...block, slides: next });
-                  }}
-                  className="ml-auto grid h-7 w-7 place-items-center rounded-md border border-border text-muted hover:bg-surface-2 disabled:opacity-30"
-                >
-                  <ChevronUpIcon />
-                </button>
-                <button
-                  type="button"
-                  aria-label="Move down"
-                  disabled={idx === block.slides.length - 1}
-                  onClick={() => {
-                    const next = [...block.slides];
-                    [next[idx + 1], next[idx]] = [next[idx], next[idx + 1]];
-                    onChange({ ...block, slides: next });
-                  }}
-                  className="grid h-7 w-7 place-items-center rounded-md border border-border text-muted hover:bg-surface-2 disabled:opacity-30"
-                >
-                  <ChevronDownIcon />
-                </button>
-                <button
-                  type="button"
-                  aria-label="Duplicate slide"
-                  title="Duplicate slide"
-                  onClick={() => {
-                    const clone = structuredClone(s);
-                    clone.id = uid("s");
-                    const next = [...block.slides];
-                    next.splice(idx + 1, 0, clone);
-                    onChange({ ...block, slides: next });
-                  }}
-                  className="grid h-7 w-7 place-items-center rounded-md border border-border text-muted hover:bg-surface-2"
-                >
-                  <CopyIcon />
-                </button>
-                <button
-                  type="button"
-                  aria-label="Remove slide"
-                  onClick={() => onChange({ ...block, slides: block.slides.filter((x) => x.id !== s.id) })}
-                  className="grid h-7 w-7 place-items-center rounded-md border border-border text-danger hover:bg-danger-tint"
-                >
-                  <TrashIcon />
-                </button>
-              </div>
-              <input
-                value={s.title ?? ""}
-                placeholder="Slide title"
-                onChange={(e) => onChange({ ...block, slides: block.slides.map((x) => (x.id === s.id ? { ...x, title: e.target.value } : x)) })}
-                className="input font-semibold"
-              />
-              <div className="mt-2">
-                <RichTextEditor
-                  value={s.body}
-                  minRows={3}
-                  onChange={(html) => onChange({ ...block, slides: block.slides.map((x) => (x.id === s.id ? { ...x, body: html } : x)) })}
-                />
-              </div>
-              <input
-                value={s.imageUrl ?? ""}
-                placeholder="Slide URL (optional) — image shown on this slide"
-                onChange={(e) => onChange({ ...block, slides: block.slides.map((x) => (x.id === s.id ? { ...x, imageUrl: e.target.value } : x)) })}
-                className="input mt-2"
-              />
-            </div>
-          ))}
-          <button
-            type="button"
-            onClick={() => onChange({ ...block, slides: [...block.slides, { id: uid("s"), title: `Slide ${block.slides.length + 1}`, body: "" }] })}
-            className="rounded-lg border border-dashed border-border px-3 py-1.5 text-xs font-semibold text-muted hover:bg-surface-2"
-          >
-            + Add slide
-          </button>
-        </div>
-      );
+      return <SlideListEditor block={block} onChange={onChange} />;
 
     case "video":
       return (
@@ -389,6 +299,103 @@ function KnowledgeCheckEditor({
         className="rounded-lg border border-dashed border-border px-3 py-1.5 text-sm font-semibold text-muted transition hover:bg-surface-2"
       >
         + Add quiz
+      </button>
+    </div>
+  );
+}
+
+function SlideListEditor({
+  block,
+  onChange,
+}: {
+  block: SlideBlock;
+  onChange: (b: Block) => void;
+}) {
+  const slidesRef = useRef(block.slides);
+  slidesRef.current = block.slides;
+
+  const sort = useSortable((draggedId, targetId) => {
+    const arr = slidesRef.current;
+    const from = arr.findIndex((s) => s.id === draggedId);
+    const to = arr.findIndex((s) => s.id === targetId);
+    if (from < 0 || to < 0) return;
+    const next = [...arr];
+    const [moved] = next.splice(from, 1);
+    next.splice(to, 0, moved);
+    onChange({ ...block, slides: next });
+  });
+
+  return (
+    <div className="space-y-3">
+      <Row label="Heading">
+        <input value={block.heading ?? ""} onChange={(e) => onChange({ ...block, heading: e.target.value })} className="input" />
+      </Row>
+      {block.slides.map((s, idx) => (
+        <div
+          key={s.id}
+          {...sort.dropProps(s.id)}
+          className={cn(
+            "rounded-lg border p-3 transition",
+            sort.isDragging(s.id) && "opacity-50",
+            sort.isOver(s.id) ? "border-brand" : "border-border"
+          )}
+        >
+          <div className="mb-2 flex items-center gap-2">
+            <DragHandle label="Drag to reorder slide" small {...sort.handleProps(s.id)} />
+            <span className="rounded-md bg-brand-tint px-2 py-0.5 text-xs font-semibold text-brand-700">
+              Slide {idx + 1}
+            </span>
+            <button
+              type="button"
+              aria-label="Duplicate slide"
+              title="Duplicate slide"
+              onClick={() => {
+                const clone = structuredClone(s);
+                clone.id = uid("s");
+                const next = [...block.slides];
+                next.splice(idx + 1, 0, clone);
+                onChange({ ...block, slides: next });
+              }}
+              className="ml-auto grid h-7 w-7 place-items-center rounded-md border border-border text-muted hover:bg-surface-2"
+            >
+              <CopyIcon />
+            </button>
+            <button
+              type="button"
+              aria-label="Remove slide"
+              onClick={() => onChange({ ...block, slides: block.slides.filter((x) => x.id !== s.id) })}
+              className="grid h-7 w-7 place-items-center rounded-md border border-border text-danger hover:bg-danger-tint"
+            >
+              <TrashIcon />
+            </button>
+          </div>
+          <input
+            value={s.title ?? ""}
+            placeholder="Slide title"
+            onChange={(e) => onChange({ ...block, slides: block.slides.map((x) => (x.id === s.id ? { ...x, title: e.target.value } : x)) })}
+            className="input font-semibold"
+          />
+          <div className="mt-2">
+            <RichTextEditor
+              value={s.body}
+              minRows={3}
+              onChange={(html) => onChange({ ...block, slides: block.slides.map((x) => (x.id === s.id ? { ...x, body: html } : x)) })}
+            />
+          </div>
+          <input
+            value={s.imageUrl ?? ""}
+            placeholder="Slide URL (optional) — image shown on this slide"
+            onChange={(e) => onChange({ ...block, slides: block.slides.map((x) => (x.id === s.id ? { ...x, imageUrl: e.target.value } : x)) })}
+            className="input mt-2"
+          />
+        </div>
+      ))}
+      <button
+        type="button"
+        onClick={() => onChange({ ...block, slides: [...block.slides, { id: uid("s"), title: `Slide ${block.slides.length + 1}`, body: "" }] })}
+        className="rounded-lg border border-dashed border-border px-3 py-1.5 text-xs font-semibold text-muted hover:bg-surface-2"
+      >
+        + Add slide
       </button>
     </div>
   );
