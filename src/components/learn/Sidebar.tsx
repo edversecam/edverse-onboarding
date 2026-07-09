@@ -74,7 +74,7 @@ export function Sidebar({
           </p>
           <div className="flex items-start gap-2.5">
             <span className="mt-0.5 flex shrink-0">
-              <StatusDot done={pct === 100} current={false} />
+              <ProgressRing value={pct / 100} size={20} />
             </span>
             <h2 className="font-display text-lg font-semibold leading-tight text-foreground">
               {course.title}
@@ -121,10 +121,9 @@ export function Sidebar({
                       isCollapsed && "-rotate-90"
                     )}
                   />
-                  <StatusDot
-                    done={m.lessons.length > 0 && moduleDone === m.lessons.length}
-                    current={false}
-                    small
+                  <ProgressRing
+                    value={m.lessons.length ? moduleDone / m.lessons.length : 0}
+                    size={16}
                   />
                   <span className="flex-1 text-xs font-bold uppercase tracking-wide text-muted">
                     {m.title}
@@ -179,6 +178,51 @@ function Chevron({ className }: { className?: string }) {
     <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="2.4">
       <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
+  );
+}
+
+/**
+ * A circular progress indicator: a grey track with a brand-blue arc filling to
+ * `value` (0–1). At 100% it shows the same green check as a completed item.
+ */
+function ProgressRing({ value, size = 20 }: { value: number; size?: number }) {
+  const v = Math.max(0, Math.min(1, value));
+  const stroke = size <= 16 ? 2 : 2.5;
+  const r = (size - stroke) / 2;
+  const circumference = 2 * Math.PI * r;
+
+  if (v >= 1) {
+    return (
+      <span
+        className="grid shrink-0 place-items-center rounded-full bg-success text-white"
+        style={{ width: size, height: size }}
+      >
+        <svg viewBox="0 0 20 20" style={{ width: size * 0.6, height: size * 0.6 }} fill="currentColor">
+          <path d="M8 13.2 4.8 10l-1.3 1.3L8 15.8l8-8-1.3-1.3z" />
+        </svg>
+      </span>
+    );
+  }
+
+  return (
+    <span className="grid shrink-0 place-items-center" style={{ width: size, height: size }}>
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="-rotate-90">
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--border)" strokeWidth={stroke} />
+        {v > 0 && (
+          <circle
+            cx={size / 2}
+            cy={size / 2}
+            r={r}
+            fill="none"
+            stroke="var(--brand)"
+            strokeWidth={stroke}
+            strokeLinecap="round"
+            strokeDasharray={circumference}
+            strokeDashoffset={circumference * (1 - v)}
+          />
+        )}
+      </svg>
+    </span>
   );
 }
 
