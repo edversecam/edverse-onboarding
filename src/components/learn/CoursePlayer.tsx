@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Course, flattenLessons } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { BlockRenderer } from "@/components/blocks/BlockRenderer";
@@ -26,6 +26,10 @@ export function CoursePlayer({ course }: { course: Course }) {
   );
   const [completed, setCompleted] = useState<Set<string>>(new Set());
   const [seeded, setSeeded] = useState(false);
+  const mainRef = useRef<HTMLElement>(null);
+
+  // The main area is the scroll container, so reset it (not the window) on nav.
+  const scrollToTop = () => mainRef.current?.scrollTo({ top: 0 });
 
   // Only collapse the drawer automatically on mobile; keep it open on desktop.
   const closeOnMobile = () => {
@@ -53,7 +57,7 @@ export function CoursePlayer({ course }: { course: Course }) {
     setIndex(i);
     closeOnMobile();
     persist([...completed], i);
-    if (typeof window !== "undefined") window.scrollTo({ top: 0 });
+    scrollToTop();
   };
 
   const next = () => {
@@ -63,14 +67,14 @@ export function CoursePlayer({ course }: { course: Course }) {
     setIndex(nextIndex);
     closeOnMobile();
     persist([...nextDone], nextIndex);
-    if (typeof window !== "undefined") window.scrollTo({ top: 0 });
+    scrollToTop();
   };
   const prev = () => !isFirst && goTo(index - 1);
 
   const courseDone = completed.size === flat.length;
 
   return (
-    <div className="flex min-h-dvh">
+    <div className="flex h-dvh overflow-hidden">
       <Sidebar
         course={course}
         flat={flat}
@@ -118,7 +122,7 @@ export function CoursePlayer({ course }: { course: Course }) {
         </header>
 
         {/* Content */}
-        <main className="scroll-slim flex-1 overflow-y-auto">
+        <main ref={mainRef} className="scroll-slim flex-1 overflow-y-auto">
           <article className="mx-auto w-full max-w-3xl px-5 py-8 sm:px-8">
             <div className="mb-6">
               <p className="text-sm font-semibold text-brand-700">
