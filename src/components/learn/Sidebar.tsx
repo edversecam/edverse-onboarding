@@ -115,12 +115,6 @@ export function Sidebar({
                   aria-expanded={!isCollapsed}
                   className="flex w-full items-center gap-1.5 rounded-md px-2 py-1.5 text-left transition hover:bg-surface-2"
                 >
-                  <Chevron
-                    className={cn(
-                      "h-3.5 w-3.5 shrink-0 text-muted transition-transform",
-                      isCollapsed && "-rotate-90"
-                    )}
-                  />
                   <ProgressRing
                     value={m.lessons.length ? moduleDone / m.lessons.length : 0}
                     size={16}
@@ -131,6 +125,12 @@ export function Sidebar({
                   <span className="shrink-0 text-[11px] font-semibold text-muted">
                     {moduleDone}/{m.lessons.length}
                   </span>
+                  <Chevron
+                    className={cn(
+                      "h-3.5 w-3.5 shrink-0 text-muted transition-transform",
+                      !isCollapsed && "rotate-180"
+                    )}
+                  />
                 </button>
 
                 {!isCollapsed && (
