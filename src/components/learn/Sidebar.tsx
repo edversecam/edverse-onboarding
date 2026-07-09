@@ -121,6 +121,11 @@ export function Sidebar({
                       isCollapsed && "-rotate-90"
                     )}
                   />
+                  <StatusDot
+                    done={m.lessons.length > 0 && moduleDone === m.lessons.length}
+                    current={false}
+                    small
+                  />
                   <span className="flex-1 text-xs font-bold uppercase tracking-wide text-muted">
                     {m.title}
                   </span>
@@ -177,11 +182,20 @@ function Chevron({ className }: { className?: string }) {
   );
 }
 
-function StatusDot({ done, current }: { done: boolean; current: boolean }) {
+function StatusDot({
+  done,
+  current,
+  small,
+}: {
+  done: boolean;
+  current: boolean;
+  small?: boolean;
+}) {
+  const size = small ? "h-4 w-4" : "h-5 w-5";
   if (done) {
     return (
-      <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-success text-white">
-        <svg viewBox="0 0 20 20" className="h-3 w-3" fill="currentColor">
+      <span className={cn("grid shrink-0 place-items-center rounded-full bg-success text-white", size)}>
+        <svg viewBox="0 0 20 20" className={small ? "h-2.5 w-2.5" : "h-3 w-3"} fill="currentColor">
           <path d="M8 13.2 4.8 10l-1.3 1.3L8 15.8l8-8-1.3-1.3z" />
         </svg>
       </span>
@@ -190,7 +204,8 @@ function StatusDot({ done, current }: { done: boolean; current: boolean }) {
   return (
     <span
       className={cn(
-        "h-5 w-5 shrink-0 rounded-full border-2",
+        "shrink-0 rounded-full border-2",
+        size,
         current ? "border-brand" : "border-border"
       )}
     />
