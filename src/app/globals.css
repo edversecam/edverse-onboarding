@@ -121,6 +121,17 @@ h1, h2, h3, h4, .font-display {
 .scroll-slim::-webkit-scrollbar-thumb { background: var(--border); border-radius: 999px; }
 .scroll-slim::-webkit-scrollbar-thumb:hover { background: #cfd4e3; }
 
+/* Prominent, always-visible scrollbar for the sidebar lesson list */
+.scroll-visible { scrollbar-width: thin; scrollbar-color: var(--muted) var(--surface-2); }
+.scroll-visible::-webkit-scrollbar { width: 12px; }
+.scroll-visible::-webkit-scrollbar-track { background: var(--surface-2); border-radius: 999px; }
+.scroll-visible::-webkit-scrollbar-thumb {
+  background: var(--muted);
+  border-radius: 999px;
+  border: 3px solid var(--surface-2);
+}
+.scroll-visible::-webkit-scrollbar-thumb:hover { background: var(--foreground); }
+
 @keyframes pop-in {
   from { opacity: 0; transform: translateY(4px) scale(0.98); }
   to { opacity: 1; transform: translateY(0) scale(1); }

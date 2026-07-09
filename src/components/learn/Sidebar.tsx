@@ -72,9 +72,14 @@ export function Sidebar({
           <p className="text-xs font-semibold uppercase tracking-wide text-brand-700">
             {course.audience ?? "Onboarding"}
           </p>
-          <h2 className="font-display text-lg font-semibold leading-tight text-foreground">
-            {course.title}
-          </h2>
+          <div className="flex items-start gap-2.5">
+            <span className="mt-0.5 flex shrink-0">
+              <StatusDot done={pct === 100} current={false} />
+            </span>
+            <h2 className="font-display text-lg font-semibold leading-tight text-foreground">
+              {course.title}
+            </h2>
+          </div>
           <div className="mt-3 flex items-center gap-2">
             <div className="h-2 flex-1 overflow-hidden rounded-full bg-surface-2">
               <div
@@ -87,7 +92,7 @@ export function Sidebar({
         </div>
 
         {/* Module / lesson tree */}
-        <nav className="scroll-slim flex-1 overflow-y-auto px-3 py-3">
+        <nav className="scroll-visible flex-1 overflow-y-auto px-3 py-3">
           {course.modules.length > 1 && (
             <div className="mb-1 flex justify-end px-2">
               <button
