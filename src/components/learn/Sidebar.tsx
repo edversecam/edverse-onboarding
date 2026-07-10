@@ -117,7 +117,7 @@ export function Sidebar({
                 >
                   <ProgressRing
                     value={m.lessons.length ? moduleDone / m.lessons.length : 0}
-                    size={24}
+                    size={28}
                   />
                   <span className="flex-1 text-xs font-bold uppercase tracking-wide text-muted">
                     {m.title}
